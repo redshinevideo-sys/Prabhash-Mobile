@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="si">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prabhash mobile & Electrical — Business Manager</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBzdG9wLWNvbG9yPSIjMmUxYjU0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDgwNjBiIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjEyMiIgaGVpZ2h0PSIxMjIiIHJ4PSIyOCIgZmlsbD0idXJsKCNnKSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjQiLz48dGV4dCB4PSI2NCIgeT0iODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSJ3aGl0ZSI+UE08L3RleHQ+PC9zdmc+">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBzdG9wLWNvbG9yPSIjMmUxYjU0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDgwNjBiIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjEyMiIgaGVpZ2h0PSIxMjIiIHJ4PSIyOCIgZmlsbD0idXJsKCNnKSIgc3Ryb2tlPSIjYTg1NWY3IiBzdHJva2Utd2lkdGg9IjQiLz48dGV4dCB4PSI2NCIgeT0iODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSJ3aGl0ZSI+UE08L3RleHQ+PC9zdmc+">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#090b10;--panel:#11151d;--panel2:#171c26;--line:#252c38;--text:#f3f4f6;--muted:#9ca3af;--red:#ef233c;--gold:#f5c542;--green:#31c48d;--blue:#5b8cff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans Sinhala",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at top right,#3a1118 0,#090b10 42%)}.loginbox{width:min(430px,100%);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 20px 70px #0008}.brand{font-size:28px;font-weight:900}.brand b{color:var(--red)}.tag{color:var(--muted);margin:6px 0 24px}.loginbox input{margin:7px 0}
+input,select,textarea{width:100%;background:#0c1017;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--red)}textarea{min-height:90px}
+.primary{background:var(--red);color:white;border:0;border-radius:9px;padding:11px 15px;font-weight:800}.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px 14px}.danger{background:#551722;color:#ffb4bd;border:1px solid #7c2634;border-radius:9px;padding:10px}
+header{height:72px;background:#0d1016;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:10}.sub{font-size:12px;color:var(--muted)}
+nav{display:block;background:transparent;border:0;overflow:visible;position:fixed}nav button{white-space:nowrap;background:transparent;color:var(--muted);border:1px solid transparent;padding:11px 12px;border-radius:10px}
+main{max-width:1250px;margin:auto;padding:18px}.page{display:none}.page.active{display:block}.space{display:flex;justify-content:space-between;align-items:center;gap:10px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}.kpi{font-size:25px;font-weight:900;margin-top:7px}.muted{color:var(--muted);font-size:13px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}label{font-size:13px;font-weight:700;color:#d5d8df}.full{grid-column:1/-1}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}th{color:#cbd0d8;background:#0e1218}.badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#272d38;color:#ddd;font-size:11px}.paid{background:#0d3b2d;color:#7df0bf}.due{background:#49370a;color:#f9d76e}.dangerbadge{background:#4a151c;color:#ff9ca8}.empty{text-align:center;padding:28px;color:var(--muted)}
+.item-field{position:relative}.suggestions{position:absolute;left:0;right:0;top:100%;z-index:60;background:#11151d;border:1px solid var(--line);border-radius:9px;margin-top:4px;overflow:hidden;box-shadow:0 12px 30px #0008}.suggestions button{display:flex;width:100%;justify-content:space-between;gap:10px;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:#11151d;color:var(--text);padding:10px 12px}.suggestions button:hover{background:#291118}.item-price-small{color:var(--muted);font-size:12px}.catalog-search{max-width:360px}
+.search{max-width:360px}.hint{color:var(--muted);font-size:12px;line-height:1.5}.status{font-size:12px;color:var(--muted)}
+/* V4 UI */
+body{overflow-x:hidden}.quick-nav{width:220px;position:fixed;left:0;top:72px;bottom:0;background:linear-gradient(180deg,#0b0712 0%,#120b1f 48%,#0a0a0d 100%);border-right:1px solid #3b2461;padding:14px 10px;z-index:8;overflow:auto}.quick-nav button{width:100%;display:flex;align-items:center;gap:10px;text-align:left;margin-bottom:6px;padding:11px 12px;border-radius:10px}.quick-nav button .nav-icon{width:24px;text-align:center;font-size:17px}.quick-nav button.active{background:#291118;color:#fff;border-color:#5b202a}.quick-title{font-size:11px;color:var(--muted);padding:3px 10px 9px;text-transform:uppercase;letter-spacing:.08em}.app-main{margin-left:220px;max-width:none}.invoice-due-row{background:rgba(239,35,60,.07)}.invoice-due-row td:first-child{border-left:3px solid var(--red)}.due-strong{color:#ff9ca8;font-weight:900}.paid-strong{color:#7df0bf;font-weight:900}.chart-wrap{margin-top:10px}.chart-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.chart{height:250px;display:flex;align-items:flex-end;gap:7px;padding:15px 8px 5px;border-bottom:1px solid var(--line);overflow-x:auto}.bar-col{min-width:38px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.bar-stack{width:100%;height:205px;display:flex;align-items:flex-end;justify-content:center;gap:2px}.bar{width:9px;border-radius:5px 5px 2px 2px;min-height:2px}.bar.income{background:var(--blue)}.bar.expense{background:var(--red)}.bar.net{background:var(--green)}.bar-label{font-size:10px;color:var(--muted);white-space:nowrap}.bar-value{font-size:9px;color:#cbd0d8;white-space:nowrap}.chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11px;color:var(--muted)}.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}.legend-income{background:var(--blue)}.legend-expense{background:var(--red)}.legend-net{background:var(--green)}.inline-customer{display:none;margin-top:10px;padding:12px;background:#0c1017;border:1px solid var(--line);border-radius:10px}.inline-customer.open{display:block}.quick-actions{display:none}@media(max-width:800px){.quick-nav{position:static;width:100%;display:flex;overflow:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px;gap:6px}.quick-title{display:none}.quick-nav button{width:auto;flex:0 0 auto;margin:0}.app-main{margin-left:0}.quick-nav button .nav-label{display:none}}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:15px;z-index:30}.modal.open{display:flex}.modalbox{width:min(760px,100%);max-height:90vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px}
+#toast{position:fixed;right:18px;bottom:18px;background:#151a22;border:1px solid var(--line);padding:12px 15px;border-radius:10px;display:none;z-index:40}
+.invoice{font-family:Arial,sans-serif;background:#fff;color:#111;padding:28px;max-width:850px;margin:auto}.invoice .top{display:flex;justify-content:space-between;border-bottom:3px solid #e31b23;padding-bottom:15px}.invoice h1{color:#e31b23;margin:0}.invoice table{color:#111}.invoice th{background:#eee;color:#111}.invoice td{border-bottom:1px solid #ddd}.total{text-align:right;font-size:21px;font-weight:900}
+#printArea{display:none}@media(max-width:650px){form{grid-template-columns:1fr}.full{grid-column:auto}header{position:static}.space{align-items:flex-start;flex-direction:column}.quick-nav{position:static}.quick-nav button{padding:9px 10px}.quick-nav button .nav-label{display:none}.app-main{margin-left:0}}
+@media print{body>*{display:none!important}#printArea{display:block!important}.invoice{display:block!important}}
+.app-logo{width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #7d5b10;box-shadow:0 0 14px #0008;flex:0 0 auto}.login-logo{width:78px;height:78px;object-fit:cover;border-radius:50%;display:block;margin:0 auto 12px;border:1px solid #7d5b10;box-shadow:0 0 24px #0009}.header-brand{display:flex;align-items:center;gap:10px}.sidebar-logo{display:flex;align-items:center;gap:10px;padding:4px 10px 14px;border-bottom:1px solid var(--line);margin-bottom:10px}.sidebar-logo img{width:38px;height:38px;border-radius:50%;border:1px solid #7d5b10}.sidebar-logo strong{font-size:13px;color:#f5c542}.sidebar-logo span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.invoice-overpaid-row{background:#2b1648!important}.overpaid-strong{color:#c084fc!important;font-weight:900}.overpaidbadge{background:#7c3aed!important;color:#fff!important}.invoice-due-row{background:#3a2308!important}.due-strong{color:#fbbf24!important;font-weight:900}.paid-strong{color:#4ade80!important;font-weight:900}.supplier-card{margin-top:14px}
+
+/* ===== Prabhash mobile & Electrical theme ===== */
+:root{--bg:#07070a;--panel:#0f0c16;--panel2:#171022;--line:#33234a;--text:#f7f4fb;--muted:#aaa0b8;--red:#8b3dff;--gold:#c084fc;--green:#31c48d;--blue:#7c5cff;--purple:#2e1b54}
+body{background:linear-gradient(135deg,#050507 0%,#0b0810 42%,#140b20 100%);background-attachment:fixed}
+#login{background:radial-gradient(circle at 10% 10%,#2e1b54 0%,#120a20 28%,#050507 62%),linear-gradient(135deg,#2e1b54,#000)}
+.loginbox{background:linear-gradient(145deg,rgba(18,12,30,.97),rgba(7,7,10,.98));border-color:#4b2a70;box-shadow:0 25px 90px #000b,0 0 40px #2e1b5444}
+.loginbox .brand{font-size:29px;letter-spacing:-.4px}.loginbox .brand b{color:#a855f7}.loginbox .tag{color:#b9a9c9}
+.primary{background:linear-gradient(90deg,#8b3dff,#6d20d9);box-shadow:0 8px 24px #6d20d944}.primary:hover{filter:brightness(1.08)}
+input:focus,select:focus,textarea:focus{border-color:#8b3dff;box-shadow:0 0 0 2px #8b3dff22}
+header{background:linear-gradient(90deg,#09070d 0%,#10091a 60%,#0b0a0e 100%);border-bottom-color:#35204c}
+.quick-nav{background:linear-gradient(180deg,#0d0816 0%,#120b1f 45%,#07070a 100%);border-right-color:#3b2461}
+.quick-nav button.active{background:linear-gradient(90deg,#2e1b54,#1c102d);color:#fff;border-color:#6338a0;box-shadow:inset 3px 0 0 #9b4dff}
+.quick-nav button:hover{background:#1c102d;color:#fff}
+.sidebar-logo{border-bottom-color:#3b2461}.sidebar-logo strong{color:#d8b4fe}.sidebar-logo span{color:#a99bb8}
+.pm-logo{display:flex;align-items:center;justify-content:center;font-weight:1000;font-family:Arial,sans-serif;letter-spacing:-2px;color:#fff;background:linear-gradient(145deg,#2e1b54,#0a0710);border:1px solid #a855f7;box-shadow:0 0 22px #7c3aed55,inset 0 0 14px #2e1b54;border-radius:14px;flex:0 0 auto}
+.pm-logo::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none}
+.pm-logo-lg{width:82px;height:82px;margin:0 auto 13px;font-size:34px;border-radius:20px}.pm-logo-sm{width:44px;height:44px;font-size:20px;border-radius:13px}.pm-logo-sidebar{width:40px;height:40px;font-size:17px;border-radius:12px}
+.header-brand .brand b{color:#a855f7}.sub{color:#a99bb8}
+.card{background:linear-gradient(145deg,#110d18,#0d0a12);border-color:#30203f}.badge{background:#251a31}.suggestions{background:#120d19;border-color:#42275d}.suggestions button{background:#120d19}.suggestions button:hover{background:#25143b}
+
+.login-contact{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;color:#d9c9e8;font-size:13px;margin:-12px 0 18px}.login-contact span{color:#bfa8d3}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="loginbox">
+    <div class="pm-logo pm-logo-lg">PM</div>
+    <div class="brand">Prabhash <b>mobile & Electrical</b></div><div class="tag">Mobile & Electrical Business Manager</div><div class="login-contact"><b>Kalahagala</b><span>📞 072-8899989</span></div>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button class="primary" style="width:100%;margin-top:8px" onclick="login()">Login</button>
+    <button class="secondary" style="width:100%;margin-top:8px" onclick="signup()">Create account</button>
+    
+  </div>
+</div>
+
+<div id="app" style="display:none">
+<header><div class="header-brand"><div class="pm-logo pm-logo-sm">PM</div><div><div class="brand">Prabhash <b>mobile & Electrical</b></div><div class="sub">Mobile Phones • Electrical • Accessories — Kalahagala • 072-8899989</div></div></div><div class="row"><span id="userLabel" class="status"></span><button class="secondary" onclick="logout()">Logout</button></div></header>
+<nav id="nav" class="quick-nav"><div class="sidebar-logo"><div class="pm-logo pm-logo-sidebar">PM</div><div><strong>Prabhash mobile & Electrical</strong><span>Cloud Business Manager</span></div></div><div class="quick-title">Quick Menu</div></nav>
+<main class="app-main">
+<section id="dashboard" class="page active"><div class="space"><h2>Dashboard</h2><div class="row"><button class="primary" onclick="openInvoice()">🧾 New Invoice</button><button class="secondary" onclick="openCustomer()">👤 New Customer</button><button class="secondary" onclick="openItemModal()">📦 New Item</button><button class="secondary" onclick="openJob()">💼 New Job</button></div></div><div class="grid" id="kpis" style="margin-top:12px"></div><div class="card" style="margin-top:14px"><div class="space"><h3>Recent Invoices</h3><button class="secondary" onclick="go('invoices')">View all</button></div><div id="recent"></div></div></section>
+<section id="customers" class="page"><div class="space"><h2>Customers</h2><div class="row"><input class="search" id="customerSearch" oninput="renderCustomers()" placeholder="Search name / phone..."><button class="primary" onclick="openCustomer()">+ Customer</button></div></div><div class="card" style="margin-top:14px"><div id="customerTable"></div></div></section>
+<section id="jobs" class="page"><div class="space"><h2>Jobs / Orders</h2><button class="primary" onclick="openJob()">+ Job</button></div><div class="card"><div id="jobTable"></div></div></section>
+<section id="invoices" class="page"><div class="space"><h2>Invoices & Bills</h2><button class="primary" onclick="openInvoice()">+ Invoice</button></div><div class="card"><div id="invoiceTable"></div></div></section>
+<section id="expenses" class="page"><div class="space"><h2>Expenses / Costs</h2><button class="primary" onclick="openExpense()">+ Expense</button></div><div class="card"><div id="expenseTable"></div></div></section>
+<section id="reports" class="page"><div class="space"><h2>Income / Expense Reports</h2><div class="row"><select id="reportPeriod" onchange="renderReports()" style="max-width:150px"><option value="daily">Daily</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select><input id="reportMonth" type="month" onchange="renderReports()" style="max-width:180px"></div></div><div class="grid" id="reportKpis" style="margin-top:12px"></div><div class="card chart-wrap"><div id="reportChart"></div></div><div class="card" style="margin-top:14px"><div id="reportBody"></div></div></section>
+<section id="reminders" class="page"><div class="space"><h2>WhatsApp Reminders</h2><span class="status">Outstanding invoices</span></div><div class="card"><div id="reminderTable"></div></div></section>
+<section id="items" class="page"><div class="space"><h2>Items</h2><div class="row"><input class="catalog-search" id="itemSearch" oninput="renderItems()" placeholder="Search items..."><button class="primary" onclick="openItemModal()">+ Item</button></div></div><div class="card" style="margin-top:14px"><div class="hint" style="margin-bottom:10px">Save your common items here. When creating an invoice, type the item name and matching items will appear automatically.</div><div id="itemTable"></div></div></section>
+<section id="suppliers" class="page"><div class="space"><h2>Suppliers</h2><div class="row"><input class="search" id="supplierSearch" oninput="renderSuppliers()" placeholder="Search supplier..."><button class="primary" onclick="openSupplier()">+ Supplier</button></div></div><div class="card supplier-card"><div class="hint" style="margin-bottom:10px">Add suppliers here. When recording a Purchase expense, choose a supplier and purchased items.</div><div id="supplierTable"></div></div></section>
+<section id="settings" class="page"><h2>Settings</h2><div class="card"><form onsubmit="saveSettings(event)"><div><label>Business name</label><input name="name" id="bizName"></div><div><label>Phone</label><input name="phone" id="bizPhone"></div><div><label>Address</label><input name="address" id="bizAddress"></div><div><label>Currency</label><input name="currency" id="currency"></div><div class="full"><label>Business Logo</label><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewLogo(event)"><div id="logoPreview" class="hint" style="margin-top:8px"></div></div><div class="full"><button class="primary">Save Settings</button></div></form><hr><p class="hint">Business settings are shared across the system. Only an Administrator can change them.</p><button class="secondary" onclick="exportBackup()">Export Backup JSON</button><span id="syncStatus" class="status" style="margin-left:10px"></span></div></section>
+<section id="admin" class="page"><div class="space"><h2>Administrator</h2><span class="badge paid">ADMIN</span></div><div class="grid" id="adminKpis" style="margin-top:12px"></div><div class="card" style="margin-top:14px"><div class="space"><h3>User Accounts</h3><span class="hint">New accounts start as Staff. Only an Administrator can change roles.</span></div><div id="adminUsers"></div></div><div class="card" style="margin-top:14px"><h3>Remove Test / Old Data</h3><p class="hint">Use the Delete buttons in the tables to remove individual records. The button below removes all customers, jobs, invoices and expenses from the cloud database. This cannot be undone.</p><button class="danger" onclick="clearAllBusinessData()">Delete ALL Business Data</button></div></section>
+</main></div>
+<div class="modal" id="modal"><div class="modalbox"><div class="space"><h3 id="modalTitle"></h3><button class="secondary" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
+<div id="toast"></div><div id="printArea"></div>
+
+<script>
+/* ====== PASTE YOUR SUPABASE VALUES HERE ====== */
+const SUPABASE_URL = "https://aallxiwvdlozviezzgzv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_nF2oVyHfpA_7h7cICQb3Gg_ozbDw_yg";
+/* ============================================== */
+let sb=null, currentUser=null, currentProfile=null, isAdmin=false;
+let data={customers:[],jobs:[],invoices:[],expenses:[],settings:null};
+function localCatalog(){try{return JSON.parse(localStorage.getItem('prabhash_item_catalog')||'[]')}catch(e){return []}}
+function catalogState(){
+  let v=data.settings?.item_catalog;
+  if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[]};
+  if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[]};
+  let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[]};
+}
+function catalog(){return catalogState().items}
+function suppliers(){return catalogState().suppliers}
+function stockOf(name){const x=catalog().find(i=>String(i.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());return Number(x?.qty)||0}
+function todayISO(){return new Date().toISOString().slice(0,10)}
+function invoiceDate(inv){const m=String(inv?.notes||'').match(/\[\[invoice_date:(\d{4}-\d{2}-\d{2})\]\]/);return m?m[1]:String(inv?.created_at||'').slice(0,10)||todayISO()}
+function cleanInvoiceNotes(notes){return String(notes||'').replace(/\[\[invoice_date:\d{4}-\d{2}-\d{2}\]\]\s*/,'').trim()}
+function purchaseInfo(exp){const m=String(exp?.description||'').match(/^\[\[PURCHASE:(.*?)\]\]\s*(.*)$/s);if(!m)return null;try{return {...JSON.parse(m[1]),label:m[2]||''}}catch(e){return null}}
+function setPurchaseDescription(info,label){return `[[PURCHASE:${JSON.stringify(info)}]] ${label||'Stock Purchase'}`}
+
+const baseNav=[['dashboard','Dashboard','🏠'],['customers','Customers','👤'],['jobs','Jobs / Orders','💼'],['invoices','Invoices','🧾'],['expenses','Expenses','💸'],['reports','Reports','📊'],['reminders','Reminders','🔔'],['items','Items','📦'],['suppliers','Suppliers','🚚']];
+function renderNav(){
+  const items=isAdmin?[...baseNav,['settings','Settings','⚙️'],['admin','Administrator','🛡️']]:baseNav;
+  nav.innerHTML='<div class="sidebar-logo"><div class="pm-logo pm-logo-sidebar">PM</div><div><strong>Prabhash mobile & Electrical</strong><span>Cloud Business Manager</span></div></div><div class="quick-title">Quick Menu</div>'+items.map(x=>`<button id="n_${x[0]}" onclick="go('${x[0]}')"><span class="nav-icon">${x[2]}</span><span class="nav-label">${x[1]}</span></button>`).join('');
+}
+function configured(){return SUPABASE_URL.startsWith('http')&&SUPABASE_ANON_KEY.length>20}
+function money(n){return `${data.settings?.currency||'LKR'} ${Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})}`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function toast(s){toastEl.textContent=s;toastEl.style.display='block';setTimeout(()=>toastEl.style.display='none',2500)}
+const toastEl=document.getElementById('toast');
+async function ensureSupabase(){if(!configured())return false;if(!window.supabase||typeof window.supabase.createClient!=='function'){alert('Supabase library load වෙලා නැහැ. Internet connection එක check කරලා refresh කරන්න.');return false}if(!sb)sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);return true}
+async function login(){try{if(!await ensureSupabase())return;const em=document.getElementById('email').value.trim(),pw=document.getElementById('password').value;if(!em||!pw)return alert('Email සහ Password දෙකම ඇතුළත් කරන්න.');const {data:a,error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)return alert('Login failed: '+error.message);if(a?.session)await start(a.session)}catch(e){console.error(e);alert('Login error: '+e.message)}}
+async function signup(){try{if(!await ensureSupabase())return;const em=document.getElementById('email').value.trim(),pw=document.getElementById('password').value;if(!em||!pw)return alert('Email සහ Password දෙකම ඇතුළත් කරන්න.');let {data:a,error}=await sb.auth.signUp({email:em,password:pw});if(error)return alert('Account creation failed: '+error.message);if(a?.session)await start(a.session);else alert('Account created. Email confirmation අවශ්‍ය නම් email එක confirm කරන්න.')}catch(e){alert('Signup error: '+e.message)}}
+async function logout(){await sb.auth.signOut()}
+function go(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));document.getElementById('n_'+id).classList.add('active');render()}
+async function boot(){if(!configured()){document.getElementById('login').innerHTML='<div class="loginbox"><div class="pm-logo pm-logo-lg">PM</div><div class="brand">Prabhash <b>mobile & Electrical</b></div><h3>Cloud setup required</h3><p class="hint">Supabase URL and Publishable Key are required.</p></div>';return}
+sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+sb.auth.onAuthStateChange((event,session)=>{if(session)start(session);else{app.style.display='none';loginEl.style.display='flex'}});
+let {data:{session}}=await sb.auth.getSession();if(session)start(session)}
+const loginEl=document.getElementById('login');
+async function start(session){
+  currentUser=session.user;
+  let pr=await sb.from('profiles').select('id,email,role').eq('id',session.user.id).maybeSingle();
+  if(pr.error){alert(pr.error.message);return}
+  currentProfile=pr.data||{id:session.user.id,email:session.user.email,role:'staff'};
+  isAdmin=currentProfile.role==='admin';
+  loginEl.style.display='none';app.style.display='block';
+  userLabel.textContent=`${session.user.email} · ${isAdmin?'Administrator':'Staff'}`;
+  renderNav();await loadAll();go('dashboard');
+}
+async function loadAll(){
+  syncStatus.textContent='Syncing...';
+  let [c,j,i,e,s]=await Promise.all([
+    sb.from('customers').select('*').order('created_at',{ascending:false}),
+    sb.from('jobs').select('*').order('date',{ascending:false}),
+    sb.from('invoices').select('*').order('created_at',{ascending:false}),
+    sb.from('expenses').select('*').order('date',{ascending:false}),
+    sb.from('business_settings').select('*').eq('id',1).maybeSingle()
+  ]);
+  for(const x of [c,j,i,e,s])if(x.error){console.error(x.error);toast(x.error.message)}
+  data={customers:c.data||[],jobs:j.data||[],invoices:i.data||[],expenses:e.data||[],settings:s.data||{name:'Prabhash mobile & Electrical',phone:'072-8899989',address:'Kalahagala',currency:'LKR',logo_data:'',item_catalog:localCatalog()}};
+  bizName.value=data.settings.name||'Prabhash mobile & Electrical';bizPhone.value=data.settings.phone||'';bizAddress.value=data.settings.address||'';currency.value=data.settings.currency||'LKR';logoPreview.innerHTML=data.settings.logo_data?`<img src="${data.settings.logo_data}" style="max-height:70px;max-width:180px;border-radius:8px;border:1px solid var(--line)"><br><span>Current logo</span>`:'No logo uploaded';
+  syncStatus.textContent='Cloud synced ✓';
+  if(isAdmin) renderAdmin();
+}
+function customerName(id){return data.customers.find(x=>x.id===id)?.name||'Walk-in / No customer'}function customer(id){return data.customers.find(x=>x.id===id)||{name:'Walk-in / No customer',phone:'',email:'',address:''}}
+function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('open')}function closeModal(){modal.classList.remove('open')}
+function contactImportControls(type){return `<div class="full" style="margin-top:4px"><div class="row" style="gap:8px;align-items:center"><button type="button" class="secondary" onclick="importPhoneContact('${type}')">📱 Import Phone Contact</button><label class="secondary" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="file" accept=".vcf,text/vcard" style="display:none" onchange="importVCard(event,'${type}')">📇 Choose .vcf</label></div><div class="hint" style="margin-top:5px">On supported phones, Import Phone Contact opens your saved contacts. If unavailable, use a .vcf contact file.</div></div>}`}
+function openCustomer(c=null){openModal(c?'Edit Customer':'New Customer',`<form id="customerForm" onsubmit="saveCustomer(event,'${c?.id||''}')"><div><label>Name</label><input name="name" required value="${esc(c?.name)}"></div>${isAdmin?`<div><label>Phone / WhatsApp</label><input name="phone" value="${esc(c?.phone)}"></div>`:''}<div><label>Email</label><input name="email" value="${esc(c?.email)}"></div><div><label>Address</label><input name="address" value="${esc(c?.address)}"></div>${isAdmin?contactImportControls('customer'):''}<div class="full"><button class="primary">Save</button></div></form>`)}
+async function saveCustomer(e,id){e.preventDefault();let o=Object.fromEntries(new FormData(e.target));let q=id?sb.from('customers').update(o).eq('id',id):sb.from('customers').insert(o);let {error}=await q;if(error)return alert(error.message);closeModal();await loadAll();render()}
+function openJob(j=null){let opts=data.customers.map(c=>`<option value="${c.id}" ${j?.customer_id===c.id?'selected':''}>${esc(c.name)}${isAdmin && c.phone ? ' — '+esc(c.phone) : ''}</option>`).join('');openModal(j?'Edit Job':'New Job',`<form onsubmit="saveJob(event,'${j?.id||''}')"><div><label>Customer</label><select name="customer_id" required>${opts}</select></div><div><label>Service</label><select name="service"><option>Photography</option><option>Videography</option><option>Printing</option><option>Photo Frame</option><option>Wedding Package</option><option>Other</option></select></div><div><label>Event / Job date</label><input type="date" name="date" value="${j?.date||''}"></div><div><label>Total agreed</label><input type="number" step=".01" name="total" value="${j?.total||0}"></div><div><label>Cost</label><input type="number" step=".01" name="cost" value="${j?.cost||0}"></div><div><label>Status</label><select name="status"><option>Booked</option><option>In Progress</option><option>Completed</option><option>Delivered</option><option>Cancelled</option></select></div><div class="full"><label>Notes</label><textarea name="notes">${esc(j?.notes)}</textarea></div><div class="full"><button class="primary">Save Job</button></div></form>`)}
+async function saveJob(e,id){e.preventDefault();let o=Object.fromEntries(new FormData(e.target));o.total=+o.total;o.cost=+o.cost;let q=id?sb.from('jobs').update(o).eq('id',id):sb.from('jobs').insert(o);let {error}=await q;if(error)return alert(error.message);closeModal();await loadAll()}
+function invoiceItemRow(it){const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===String(it.name||'').trim().toLowerCase());const stockText=stock?`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}${Number(stock.cost||0)>0?` • Buy: ${money(stock.cost)} • Profit: ${money((Number(stock.price)||0)-(Number(stock.cost)||0))}/unit`:''}`:'Not a saved stock item';return `<div class="invoice-item-row row" data-cost="${Number(it.cost)||Number(stock?.cost)||0}" style="margin-bottom:8px;align-items:end"><div class="item-field" style="flex:2;min-width:180px"><label>Item</label><input class="item-name" value="${esc(it.name||'')}" placeholder="Type item name..." autocomplete="off" oninput="invoiceItemNameInput(this)" onfocus="invoiceItemNameInput(this)"><div class="suggestions"></div><div class="stock-info hint" style="margin-top:4px">${stockText}</div></div><div style="width:95px"><label>Qty</label><input class="item-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(it.qty)||1))}" oninput="updateInvoiceTotals()"></div><div style="width:140px"><label>Unit Price</label><input class="item-price" type="number" min="0" step="0.01" value="${Number(it.price)||0}" oninput="updateInvoiceTotals()"></div><button type="button" class="secondary" onclick="saveItemFromInvoice(this)">Save Item</button><button type="button" class="danger" onclick="removeInvoiceItem(this)">Remove</button></div>`}
+function invoiceItemNameInput(input){
+  const q=input.value.trim().toLowerCase(); const box=input.parentElement.querySelector('.suggestions');
+  if(!q){box.innerHTML='';return}
+  const all=catalog();
+  const matches=[...all.filter(x=>String(x.name||'').toLowerCase().startsWith(q)),...all.filter(x=>!String(x.name||'').toLowerCase().startsWith(q)&&String(x.name||'').toLowerCase().includes(q))].slice(0,8);
+  box.innerHTML=matches.map(x=>`<button type="button" onclick='pickInvoiceItem(this, ${JSON.stringify(x.name)}, ${Number(x.price)||0}, ${Number(x.cost)||0})'><span>${esc(x.name)} <small style="opacity:.75">Stock: ${Number(x.qty)||0}</small></span><span class="item-price-small">${money(x.price)}</span></button>`).join('');
+}
+function pickInvoiceItem(btn,name,price,cost){const row=btn.closest('.invoice-item-row');row.querySelector('.item-name').value=name;row.querySelector('.item-price').value=Number(price)||0;row.dataset.cost=Number(cost)||0;row.querySelector('.suggestions').innerHTML='';const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===String(name).trim().toLowerCase());row.dataset.cost=Number(stock?.cost)||0;const info=row.querySelector('.stock-info');if(info)info.innerHTML=stock?`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}${Number(stock.cost||0)>0?` • Buy: ${money(stock.cost)} • Profit: ${money((Number(stock.price)||0)-(Number(stock.cost)||0))}/unit`:''}`:'Not a saved stock item';updateInvoiceTotals()}
+async function saveCatalog(nextState){
+  if(!isAdmin){alert('Administrator access required to change the shared item list.');return false}
+  const st=(nextState&&nextState.items)?nextState:catalogState();
+  st.items=st.items.filter(x=>x.name).map(x=>({name:String(x.name).trim(),cost:Math.max(0,Number(x.cost)||0),price:Math.max(0,Number(x.price)||0),qty:Math.max(0,Math.round(Number(x.qty)||0)),supplier:String(x.supplier||'').trim()}));
+  const seen=new Map();st.items.forEach(x=>seen.set(x.name.toLowerCase(),x));st.items=[...seen.values()];
+  st.suppliers=(st.suppliers||[]).filter(x=>x.name).map(x=>({id:x.id||crypto.randomUUID(),name:String(x.name).trim(),phone:String(x.phone||''),notes:String(x.notes||'')}));
+  const {data:updated,error}=await sb.from('business_settings').upsert({id:1,item_catalog:st},{onConflict:'id'}).select('item_catalog').maybeSingle();
+  if(error){console.error(error);alert('Could not save shared data.\n\n'+error.message);return false}
+  data.settings.item_catalog=updated?.item_catalog||st;localStorage.setItem('prabhash_item_catalog',JSON.stringify(st.items));toast('Saved ✓');return true
+}
+function changeStock(name,delta,state){const x=state.items.find(i=>String(i.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());if(x)x.qty=Math.max(0,(Number(x.qty)||0)+Number(delta||0))}
+function invoiceStockDelta(items,sign,state){for(const it of items||[]){const x=state.items.find(i=>String(i.name||'').trim().toLowerCase()===String(it.name||'').trim().toLowerCase());if(x)changeStock(it.name,sign*Math.max(0,Math.round(Number(it.qty)||0)),state)}}
+function checkInvoiceStock(items,state,editingOld){
+  const available={};state.items.forEach(x=>available[String(x.name).toLowerCase()]=Number(x.qty)||0);
+  for(const it of (editingOld||[])){const k=String(it.name||'').toLowerCase();if(k in available)available[k]+=Math.max(0,Math.round(Number(it.qty)||0));}
+  for(const it of items||[]){const k=String(it.name||'').toLowerCase();if(k in available && Math.max(0,Math.round(Number(it.qty)||0))>available[k])return `Not enough stock for "${it.name}". Available: ${available[k]}`;}
+  return '';
+}
+async function saveItemFromInvoice(btn){
+  const row=btn.closest('.invoice-item-row');const name=row.querySelector('.item-name').value.trim();const price=Number(row.querySelector('.item-price').value)||0;
+  if(!name)return alert('Enter an item name first.');
+  const st=catalogState();st.items=[...st.items.filter(x=>String(x.name||'').toLowerCase()!==name.toLowerCase()),{name,cost:0,price,qty:0}];
+  await saveCatalog(st);btn.textContent='Saved ✓';setTimeout(()=>btn.textContent='Save Item',900);
+}
+function openItemModal(item=null){
+  if(!isAdmin)return alert('Administrator access required to add or edit saved items.');
+  const supplierName=String(item?.supplier||'');
+  const supplierOptions=suppliers().map(z=>`<option value="${esc(z.name)}" ${z.name===supplierName?'selected':''}>${esc(z.name)}</option>`).join('');
+  openModal(item?'Edit Item':'New Item',`<form onsubmit="saveItemCatalog(event,'${item?.name?esc(item.name):''}')"><div><label>Item name</label><input name="name" required value="${esc(item?.name)}" placeholder="e.g. Photo Paper Print"></div><div><label>Supplier Cost / Buy Price</label><input name="cost" type="number" min="0" step="0.01" value="${Number(item?.cost)||0}" placeholder="What you pay supplier"></div><div><label>Selling Price</label><input name="price" type="number" min="0" step="0.01" required value="${Number(item?.price)||0}" placeholder="What customer pays"></div><div><label>Supplier <span class="hint">(optional)</span></label><select name="supplier"><option value="">— No supplier —</option>${supplierOptions}</select></div><div><label>Quantity in stock</label><input name="qty" type="number" min="0" step="1" value="${Math.max(0,Math.round(Number(item?.qty)||0))}" placeholder="0"></div><div class="full"><div class="hint">Supplier is optional. Buy price is what you pay the supplier; Selling price is what you charge the customer. Quantity is whole numbers only.</div></div><div class="full"><button class="primary">Save Item</button></div></form>`)
+}
+async function saveItemCatalog(e,oldName){
+  e.preventDefault();
+  const f=new FormData(e.target),name=String(f.get('name')||'').trim(),cost=Math.max(0,Number(f.get('cost'))||0),price=Math.max(0,Number(f.get('price'))||0),supplier=String(f.get('supplier')||'').trim(),qty=Math.max(0,Math.round(Number(f.get('qty'))||0));
+  if(!name)return;
+  const old=String(oldName||'').trim().toLowerCase();
+  const st=catalogState(); const existing=st.items.find(x=>String(x.name||'').trim().toLowerCase()===old); st.items=st.items.filter(x=>String(x.name||'').trim().toLowerCase()!==old && String(x.name||'').trim().toLowerCase()!==name.toLowerCase()); st.items.push({name,cost,price,qty,supplier:supplier||String(existing?.supplier||'')});
+  const ok=await saveCatalog(st);
+  if(ok){closeModal();renderItems()}
+}
+async function deleteItemCatalog(name){
+  if(!isAdmin)return alert('Administrator access required.');
+  if(!confirm(`Delete saved item "${name}"?`))return;
+  const st=catalogState();st.items=st.items.filter(x=>String(x.name||'').trim().toLowerCase()!==String(name||'').trim().toLowerCase());
+  const ok=await saveCatalog(st);
+  if(ok)renderItems();
+}
+function editItemByIndex(idx){
+  if(!isAdmin)return alert('Administrator access required to edit saved items.');
+  const item=catalog()[Number(idx)];
+  if(!item)return alert('Item not found.');
+  openItemModal(item);
+}
+function deleteItemByIndex(idx){
+  if(!isAdmin)return alert('Administrator access required to delete saved items.');
+  const item=catalog()[Number(idx)];
+  if(!item)return alert('Item not found.');
+  deleteItemCatalog(item.name);
+}
+function renderItems(){
+  const q=(document.getElementById('itemSearch')?.value||'').toLowerCase();
+  const rows=catalog().map((x,idx)=>({...x,_idx:idx})).filter(x=>String(x.name||'').toLowerCase().includes(q));
+  itemTable.innerHTML=rows.length?`<table><tr><th>Item</th><th>Supplier</th><th>Buy Price</th><th>Selling Price</th><th>Profit / Unit</th><th>Qty in Stock</th><th>Actions</th></tr>${rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.supplier||'—')}</td><td>${money(x.cost)}</td><td>${money(x.price)}</td><td><b>${money((Number(x.price)||0)-(Number(x.cost)||0))}</b></td><td><b>${Number(x.qty)||0}</b></td><td>${isAdmin?`<button type="button" class="secondary" onclick="editItemByIndex(${x._idx})">Edit</button> <button type="button" class="danger" onclick="deleteItemByIndex(${x._idx})">Delete</button>`:'<span class="status">Read only</span>'}</td></tr>`).join('')}</table>`:'<div class="empty">No saved items yet.</div>'
+}
+function nextInvoiceNo(){const y=new Date().getFullYear();const nums=data.invoices.map(i=>String(i.invoice_no||'').match(/^INV-(\d{4})-(\d+)$/)).filter(Boolean).filter(m=>+m[1]===y).map(m=>+m[2]);const n=(nums.length?Math.max(...nums):0)+1;return `INV-${y}-${String(n).padStart(4,'0')}`}
+function refreshInvoiceCustomerSelect(selectedId=''){
+  const sel=document.querySelector('#invoiceForm select[name="customer_id"]');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— No customer / Walk-in —</option>'+data.customers.map(c=>`<option value="${c.id}">${esc(c.name)}${c.phone?' — '+esc(c.phone):''}</option>`).join('');
+  sel.value=selectedId||'';
+}
+function toggleInlineCustomer(){document.getElementById('inlineCustomerBox')?.classList.toggle('open')}
+async function saveInlineCustomer(){
+  const box=document.getElementById('inlineCustomerBox');
+  const o={name:box?.querySelector('[name="name"]')?.value||'',phone:box?.querySelector('[name="phone"]')?.value||'',email:box?.querySelector('[name="email"]')?.value||'',address:box?.querySelector('[name="address"]')?.value||''};
+  o.name=String(o.name||'').trim();
+  if(!o.name)return alert('Customer name is required.');
+  const {data:created,error}=await sb.from('customers').insert(o).select('*').single();
+  if(error)return alert(error.message);
+  data.customers.unshift(created);
+  refreshInvoiceCustomerSelect(created.id);
+  document.getElementById('inlineCustomerBox')?.classList.remove('open');
+  box?.querySelectorAll('input').forEach(x=>x.value='');
+  toast('Customer added to invoice ✓');
+}
+function openInvoice(inv=null){
+  let items=Array.isArray(inv?.items)&&inv.items.length?inv.items:[{name:'',qty:1,price:0}];
+  let invNo=inv?.invoice_no||nextInvoiceNo(), d=invoiceDate(inv);
+  openModal(inv?'Edit Invoice':'New Invoice',`<form id="invoiceForm" onsubmit="saveInvoice(event,'${inv?.id||''}')">
+  <div><label>Invoice No.</label><input name="invoice_no" value="${esc(invNo)}" readonly></div>
+  <div><label>Invoice Date</label><input type="date" name="invoice_date" value="${d}" required></div>
+  <div><label>Customer <span class="hint">(optional)</span></label><div class="row"><select name="customer_id" style="flex:1"><option value="">— No customer / Walk-in —</option>${data.customers.map(c=>`<option value="${c.id}" ${inv?.customer_id===c.id?'selected':''}>${esc(c.name)}${c.phone?' — '+esc(c.phone):''}</option>`).join('')}</select><button type="button" class="secondary" onclick="toggleInlineCustomer()">+ New Customer</button></div>
+  <div id="inlineCustomerBox" class="inline-customer"><div class="grid"><div><label>Name</label><input name="name" placeholder="Customer name"></div><div><label>Phone / WhatsApp</label><input name="phone" placeholder="07XXXXXXXX"></div><div><label>Email</label><input name="email"></div><div><label>Address</label><input name="address"></div></div><div class="row" style="margin-top:10px"><button type="button" class="primary" onclick="saveInlineCustomer()">Save Customer</button><button type="button" class="secondary" onclick="toggleInlineCustomer()">Cancel</button></div></div></div>
+  <div><label>Due date</label><input type="date" name="due_date" value="${inv?.due_date||''}"></div>
+  <div><label>Payment method</label><select name="payment_method"><option ${inv?.payment_method==='Cash'?'selected':''}>Cash</option><option ${inv?.payment_method==='Bank Transfer'?'selected':''}>Bank Transfer</option><option ${inv?.payment_method==='Card'?'selected':''}>Card</option><option ${inv?.payment_method==='Online'?'selected':''}>Online</option><option ${inv?.payment_method==='Other'?'selected':''}>Other</option></select></div>
+  <div id="invoiceItems" class="full"><div class="space"><label>Invoice Items</label><button type="button" class="secondary" onclick="addInvoiceItem()">+ Add Item</button></div><div id="invoiceItemRows" style="margin-top:8px">${items.map(invoiceItemRow).join('')}</div><div class="hint" style="margin-top:7px">Quantity is whole numbers only. Stock is checked for saved items. Saved items also track buy cost and selling price for profit calculation.</div></div>
+  <div><label>Discount</label><input id="invoiceDiscount" type="number" min="0" step="0.01" name="discount" value="${Number(inv?.discount)||0}" oninput="updateInvoiceTotals()"></div>
+  <div><label>Paid / Advance</label><input id="invoicePaid" type="number" min="0" step="0.01" name="paid" value="${Number(inv?.paid)||0}" oninput="updateInvoiceTotals()"></div>
+  <div class="full"><label>Notes</label><textarea name="notes" placeholder="Thank you / payment note / delivery note">${esc(cleanInvoiceNotes(inv?.notes))}</textarea></div>
+  <div class="full card" style="padding:12px;margin-top:2px"><div class="space"><span>Subtotal</span><b id="invoiceSubtotal">${money(items.reduce((s,x)=>s+(Number(x.qty)||0)*(Number(x.price)||0),0))}</b></div><div class="space"><span>Discount</span><b id="invoiceDiscountView">${money(Number(inv?.discount)||0)}</b></div><div class="space"><span>Total</span><b id="invoiceTotal">${money(Math.max(0,items.reduce((s,x)=>s+(Number(x.qty)||0)*(Number(x.price)||0),0)-(Number(inv?.discount)||0)))}</b></div><div class="space"><span>Balance / Change</span><b id="invoiceBalance">${money(Math.max(0,Number(inv?.total||0)-Number(inv?.paid||0)))}</b></div><div id="overpaidNotice" style="display:none;margin-top:8px;padding:10px;border-radius:10px;background:#7c3aed;color:#fff;font-weight:800">OVERPAID — Change: ${money(0)}</div></div>
+  <div class="full"><button class="primary">Save Invoice</button></div></form>`); updateInvoiceTotals();
+}
+function addInvoiceItem(){const box=document.getElementById('invoiceItemRows');if(!box)return;box.insertAdjacentHTML('beforeend',invoiceItemRow({name:'',qty:1,price:0}));updateInvoiceTotals()}
+function removeInvoiceItem(btn){const rows=document.querySelectorAll('#invoiceItemRows .invoice-item-row');if(rows.length<=1){alert('At least one invoice item is required.');return}btn.closest('.invoice-item-row').remove();updateInvoiceTotals()}
+function readInvoiceItems(){return [...document.querySelectorAll('#invoiceItemRows .invoice-item-row')].map(row=>({name:row.querySelector('.item-name').value.trim(),cost:Math.max(0,Number(row.dataset.cost)||0),qty:Math.max(1,Math.round(Number(row.querySelector('.item-qty').value)||1)),price:Math.max(0,Number(row.querySelector('.item-price').value)||0)})).filter(x=>x.name||x.price>0)}
+function updateInvoiceTotals(){const items=readInvoiceItems();const subtotal=items.reduce((s,x)=>s+x.qty*x.price,0);const discount=Math.max(0,Number(document.getElementById('invoiceDiscount')?.value)||0);const paid=Math.max(0,Number(document.getElementById('invoicePaid')?.value)||0);const total=Math.max(0,subtotal-discount);const balance=total-paid;const a=document.getElementById('invoiceSubtotal'),b=document.getElementById('invoiceDiscountView'),c=document.getElementById('invoiceTotal'),d=document.getElementById('invoiceBalance'),n=document.getElementById('overpaidNotice');if(a)a.textContent=money(subtotal);if(b)b.textContent=money(discount);if(c)c.textContent=money(total);if(d)d.textContent=money(Math.abs(balance));if(d)d.parentElement.querySelector('span').textContent=balance<0?'Change':'Balance';if(n){n.style.display=balance<0?'block':'none';n.textContent='OVERPAID — Change: '+money(Math.abs(balance))}}
+async function saveInvoice(e,id){
+  e.preventDefault(); const f=new FormData(e.target), old=data.invoices.find(x=>x.id===id); const items=readInvoiceItems();
+  if(!items.length)return alert('Please add at least one item with a description or price.');
+  const st=catalogState(); const stockError=checkInvoiceStock(items,st,old?.items||[]); if(stockError)return alert(stockError);
+  const subtotal=items.reduce((s,x)=>s+x.qty*x.price,0),discount=Math.max(0,Number(f.get('discount'))||0),paid=Math.max(0,Number(f.get('paid'))||0),total=Math.max(0,subtotal-discount),balance=total-paid;
+  let notes=cleanInvoiceNotes(f.get('notes')||''); notes=`[[invoice_date:${f.get('invoice_date')||todayISO()}]]${notes?' '+notes:''}`;
+  const o={invoice_no:f.get('invoice_no')||nextInvoiceNo(),customer_id:f.get('customer_id')||null,due_date:f.get('due_date')||null,payment_method:f.get('payment_method')||'Cash',items,discount,paid,notes,total,balance,status:balance<0?'Overpaid':balance===0?'Paid':paid>0?'Partial':'Unpaid'};
+  const result=id?await sb.from('invoices').update(o).eq('id',id):await sb.from('invoices').insert(o); if(result.error)return alert(result.error.message);
+  if(old)invoiceStockDelta(old.items||[],1,st); invoiceStockDelta(items,-1,st); await saveCatalog(st);
+  closeModal();await loadAll();render();toast(balance<0?'Invoice saved — change due ✓':'Invoice saved ✓');
+}
+function purchaseRowsHtml(rows){return rows.map((x)=>`<div class="purchase-row row" style="margin-bottom:8px;align-items:end"><div style="flex:2"><label>Item</label><select class="purchase-item" onchange="purchaseItemChanged(this)"><option value="">Select item</option>${catalog().map(i=>`<option value="${esc(i.name)}" ${i.name===x.name?'selected':''}>${esc(i.name)} (Stock: ${Number(i.qty)||0})</option>`).join('')}</select></div><div style="width:90px"><label>Qty</label><input class="purchase-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(x.qty)||1))}"></div><div style="width:130px"><label>Unit cost</label><input class="purchase-cost" type="number" min="0" step="0.01" value="${Number(x.cost)||0}"></div><button type="button" class="danger" onclick="this.closest('.purchase-row').remove()">Remove</button></div>`).join('')}
+function openExpense(x=null){const pi=purchaseInfo(x), rows=pi?.items||[{name:'',qty:1,cost:0}], sup=pi?.supplier||'';openModal(x?'Edit Expense':'New Expense',`<form onsubmit="saveExpense(event,'${x?.id||''}')"><div><label>Date</label><input type="date" name="date" value="${x?.date||todayISO()}" required></div><div><label>Category</label><select name="category" id="expenseCategory" onchange="togglePurchaseFields()"><option ${x?.category==='Purchase'?'selected':''}>Purchase</option><option ${x?.category==='Equipment'?'selected':''}>Equipment</option><option ${x?.category==='Printing'?'selected':''}>Printing</option><option ${x?.category==='Travel'?'selected':''}>Travel</option><option ${x?.category==='Staff'?'selected':''}>Staff</option><option ${x?.category==='Other'?'selected':''}>Other</option></select></div><div id="purchaseFields" class="full"><div><label>Supplier</label><select id="purchaseSupplier"><option value="">Select supplier</option>${suppliers().map(z=>`<option value="${esc(z.name)}" ${z.name===sup?'selected':''}>${esc(z.name)}</option>`).join('')}</select></div><div style="margin-top:12px"><div class="space"><label>Purchased Items</label><button type="button" class="secondary" onclick="addPurchaseRow()">+ Add Item</button></div><div id="purchaseRows">${purchaseRowsHtml(rows)}</div></div></div><div class="full"><label>Description</label><input id="expenseDescription" name="description" value="${esc(pi?.label||(!pi?x?.description:''))}"></div><div><label>Amount</label><input id="expenseAmount" type="number" step="0.01" min="0" name="amount" value="${x?.amount||0}" required></div><div class="full"><button class="primary">Save Expense</button></div></form>`);togglePurchaseFields();}
+function togglePurchaseFields(){const p=document.getElementById('purchaseFields'),cat=document.getElementById('expenseCategory')?.value;if(p)p.style.display=cat==='Purchase'?'block':'none'}
+function addPurchaseRow(){const box=document.getElementById('purchaseRows');if(box)box.insertAdjacentHTML('beforeend',purchaseRowsHtml([{name:'',qty:1,cost:0}]))}
+function purchaseItemChanged(sel){const it=catalog().find(x=>x.name===sel.value);const row=sel.closest('.purchase-row');if(it&&row)row.querySelector('.purchase-cost').value=Number(it.cost)||0}
+async function saveExpense(e,id){e.preventDefault();const f=new FormData(e.target),cat=f.get('category');let amount=Number(f.get('amount'))||0,desc=f.get('description')||'';const old=id?data.expenses.find(x=>x.id===id):null;const oldPi=purchaseInfo(old);const st=catalogState();if(cat==='Purchase'){const rows=[...document.querySelectorAll('.purchase-row')].map(r=>({name:r.querySelector('.purchase-item')?.value||'',qty:Math.max(1,Math.round(Number(r.querySelector('.purchase-qty')?.value)||1)),cost:Number(r.querySelector('.purchase-cost')?.value)||0})).filter(x=>x.name);if(!rows.length)return alert('Add at least one purchased item.');const supplier=document.getElementById('purchaseSupplier')?.value||'';if(!supplier)return alert('Select a supplier.');if(!amount)amount=rows.reduce((s,x)=>s+x.qty*x.cost,0);if(oldPi)for(const r of oldPi.items||[])changeStock(r.name,-Math.max(0,Math.round(Number(r.qty)||0)),st);for(const r of rows)changeStock(r.name,Math.max(0,Math.round(Number(r.qty)||0)),st);desc=setPurchaseDescription({supplier,items:rows},desc||'Stock Purchase')}else if(oldPi){for(const r of oldPi.items||[])changeStock(r.name,-Math.max(0,Math.round(Number(r.qty)||0)),st)}const o={date:f.get('date'),category:cat,description:desc,amount};const q=id?await sb.from('expenses').update(o).eq('id',id):await sb.from('expenses').insert(o);if(q.error)return alert(q.error.message);if(cat==='Purchase'||oldPi)await saveCatalog(st);closeModal();await loadAll();render();toast('Expense saved ✓')}
+function render(){renderDashboard();renderCustomers();renderJobs();renderInvoices();renderExpenses();renderReports();renderReminders();renderItems();renderSuppliers()}
+function invoiceGrossProfit(inv){const items=Array.isArray(inv?.items)?inv.items:[];const cogs=items.reduce((s,it)=>s+(Number(it.qty)||0)*(Number(it.cost)||0),0);return Number(inv?.total||0)-cogs}
+function renderDashboard(){let sales=data.invoices.reduce((s,x)=>s+x.total,0),paid=data.invoices.reduce((s,x)=>s+x.paid,0),cost=data.expenses.reduce((s,x)=>s+x.amount,0)+data.jobs.reduce((s,x)=>s+x.cost,0),gross=data.invoices.reduce((s,x)=>s+invoiceGrossProfit(x),0);kpis.innerHTML=[['Sales',money(sales)],['Collected',money(paid)],['Outstanding',money(sales-paid)],['Gross Profit',money(gross)],['Result',money(sales-cost)]].map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="kpi">${x[1]}</div></div>`).join('');let r=data.invoices.slice(0,5);recent.innerHTML=r.length?`<table><tr><th>No</th><th>Customer</th><th>Total</th><th>Status</th><th></th></tr>${r.map(i=>`<tr><td>${i.invoice_no||i.id.slice(0,8)}</td><td>${esc(customerName(i.customer_id))}</td><td>${money(i.total)}</td><td><span class="badge">${i.status}</span></td><td><button class="secondary" onclick="printInvoice('${i.id}')">PDF / Print</button></td></tr>`).join('')}</table>`:'<div class="empty">No invoices yet.</div>'}
+function renderCustomers(){let q=(customerSearch.value||'').toLowerCase();let r=data.customers.filter(c=>(c.name+' '+(isAdmin?(c.phone||'')+' ':'')+(c.email||'')).toLowerCase().includes(q));customerTable.innerHTML=r.length?`<table><tr><th>Name</th>${isAdmin?'<th>Phone</th>':''}<th>Email</th><th>Actions</th></tr>${r.map(c=>`<tr><td>${esc(c.name)}</td>${isAdmin?`<td>${esc(c.phone||'')}</td>`:''}<td>${esc(c.email||'')}</td><td><button class="secondary" onclick="openCustomer(data.customers.find(x=>x.id==='${c.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteRecord('customers','${c.id}','customer')">Delete</button>`:''}</td></tr>`).join('')}</table>`:'<div class="empty">No customers.</div>'}
+function jobWhatsApp(id){
+  const j=data.jobs.find(x=>x.id===id),c=customer(j?.customer_id);if(!j||!c)return;
+  let p=String(c.phone||'').replace(/\D/g,'');if(p.startsWith('0'))p='94'+p.slice(1);if(!p)return alert('Customer phone number missing');
+  const total=Number(j.total||0),paid=Number(j.paid||0),balance=('balance' in j)?Number(j.balance||0):Math.max(total-paid,0);
+  const msg=`${data.settings.name}\n\nJob / Order: ${j.service||'-'}\nCustomer: ${c.name}\n\nDate: ${j.date||'-'}\nStatus: ${j.status||'-'}\n\nTotal Amount: ${money(total)}${('paid' in j)?`\nAdvance Paid: ${money(paid)}\nBalance Due: ${money(balance)}`:''}${j.notes?`\n\nNotes:\n${j.notes}`:''}\n\nThank you for choosing ${data.settings.name}.`;
+  openModal('WhatsApp Job / Order Message',`<div class="card"><textarea id="jobWaMessage" style="min-height:300px;white-space:pre-wrap">${esc(msg)}</textarea><button type="button" class="primary" style="margin-top:10px" onclick="sendWa('${p}','jobWaMessage')">Send WhatsApp</button></div>`)
+}
+function renderJobs(){jobTable.innerHTML=data.jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Cost</th><th>Status</th><th>Actions</th></tr>${data.jobs.map(j=>`<tr><td>${esc(customerName(j.customer_id))}</td><td>${esc(j.service)}</td><td>${j.date||''}</td><td>${money(j.total)}</td><td>${money(j.cost)}</td><td><span class="badge">${esc(j.status)}</span></td><td><button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`).join('')}</table>`:'<div class="empty">No jobs.</div>'}
+function renderInvoices(){invoiceTable.innerHTML=data.invoices.length?`<table><tr><th>No</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Balance/Change</th><th>Status</th><th>Actions</th></tr>${data.invoices.map(i=>{const bal=Number(i.balance||0),over=bal<0,due=bal>0;return `<tr class="${over?'invoice-overpaid-row':due?'invoice-due-row':''}"><td>${i.invoice_no||i.id.slice(0,8)}</td><td>${invoiceDate(i)}</td><td>${esc(customerName(i.customer_id))}</td><td>${money(i.total)}</td><td>${money(i.paid)}</td><td class="${over?'overpaid-strong':due?'due-strong':'paid-strong'}">${money(Math.abs(bal))}</td><td><span class="badge ${over?'overpaidbadge':due?'dangerbadge':'paid'}">${over?'OVERPAID':due?'BALANCE DUE':'PAID'}</span></td><td><button class="secondary" onclick="openInvoice(data.invoices.find(x=>x.id==='${i.id}'))">Edit</button> <button class="secondary" onclick="printInvoice('${i.id}')">PDF</button>${due?` <button class="secondary" onclick="waReminder('${i.id}')">WhatsApp</button>`:''}${isAdmin?` <button class="danger" onclick="deleteRecord('invoices','${i.id}','invoice')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No invoices.</div>'}
+function renderExpenses(){expenseTable.innerHTML=data.expenses.length?`<table><tr><th>Date</th><th>Category</th><th>Description</th><th>Supplier</th><th>Amount</th><th>Actions</th></tr>${data.expenses.map(x=>{const p=purchaseInfo(x);return `<tr><td>${x.date}</td><td>${esc(x.category)}</td><td>${esc(p?.label||x.description)}</td><td>${esc(p?.supplier||'-')}</td><td>${money(x.amount)}</td><td><button class="secondary" onclick="openExpense(data.expenses.find(v=>v.id==='${x.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteExpense('${x.id}')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No expenses.</div>'}
+function renderSuppliers(){const q=(document.getElementById('supplierSearch')?.value||'').toLowerCase();const rows=suppliers().filter(x=>(x.name+' '+x.phone+' '+x.notes).toLowerCase().includes(q));supplierTable.innerHTML=rows.length?`<table><tr><th>Supplier</th><th>Phone</th><th>Notes</th><th>Actions</th></tr>${rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.phone||'')}</td><td>${esc(x.notes||'')}</td><td><button class="secondary" onclick='openSupplier(${JSON.stringify(x).replace(/'/g,"&#39;")})'>Edit</button><button class="danger" onclick="deleteSupplier('${x.id}')">Delete</button></td></tr>`).join('')}</table>`:'<div class="empty">No suppliers yet.</div>'}
+function openSupplier(x=null){if(!isAdmin)return alert('Administrator access required.');openModal(x?'Edit Supplier':'New Supplier',`<form id="supplierForm" onsubmit="saveSupplier(event,'${x?.id||''}')"><div><label>Supplier name</label><input name="name" required value="${esc(x?.name)}"></div><div><label>Phone</label><input name="phone" value="${esc(x?.phone)}"></div><div class="full"><label>Notes</label><input name="notes" value="${esc(x?.notes)}"></div>${contactImportControls('supplier')}<div class="full"><button class="primary">Save Supplier</button></div></form>`)}
+async function saveSupplier(e,id){e.preventDefault();const f=new FormData(e.target),st=catalogState(),o={id:id||crypto.randomUUID(),name:String(f.get('name')||'').trim(),phone:String(f.get('phone')||''),notes:String(f.get('notes')||'')};if(!o.name)return;st.suppliers=st.suppliers.filter(x=>x.id!==id&&x.name.toLowerCase()!==o.name.toLowerCase());st.suppliers.push(o);if(await saveCatalog(st)){closeModal();renderSuppliers()}}
+async function deleteSupplier(id){if(!isAdmin)return alert('Administrator access required.');if(!confirm('Delete this supplier?'))return;const st=catalogState();st.suppliers=st.suppliers.filter(x=>x.id!==id);if(await saveCatalog(st))renderSuppliers()}
+async function deleteExpense(id){if(!isAdmin)return alert('Administrator access required.');if(!confirm('Delete this expense?'))return;const x=data.expenses.find(v=>v.id===id),pi=purchaseInfo(x),st=catalogState();if(pi)for(const r of pi.items||[])changeStock(r.name,-Math.max(0,Math.round(Number(r.qty)||0)),st);const {error}=await sb.from('expenses').delete().eq('id',id);if(error)return alert(error.message);if(pi)await saveCatalog(st);await loadAll();render();toast('Expense deleted ✓')}
+function reportMetricsForPeriod(period, key){
+  let inc=0,col=0,ex=0,jc=0,gp=0;
+  if(period==='daily'){
+    const day=key; gp=data.invoices.filter(x=>(x.created_at||'').slice(0,10)===day).reduce((s,x)=>s+invoiceGrossProfit(x),0); inc=data.invoices.filter(x=>(x.created_at||'').slice(0,10)===day).reduce((s,x)=>s+Number(x.total||0),0); col=data.invoices.filter(x=>(x.created_at||'').slice(0,10)===day).reduce((s,x)=>s+Number(x.paid||0),0); ex=data.expenses.filter(x=>x.date===day).reduce((s,x)=>s+Number(x.amount||0),0); jc=data.jobs.filter(x=>x.date===day).reduce((s,x)=>s+Number(x.cost||0),0);
+  }else if(period==='monthly'){
+    gp=data.invoices.filter(x=>(x.created_at||'').slice(0,7)===key).reduce((s,x)=>s+invoiceGrossProfit(x),0); inc=data.invoices.filter(x=>(x.created_at||'').slice(0,7)===key).reduce((s,x)=>s+Number(x.total||0),0); col=data.invoices.filter(x=>(x.created_at||'').slice(0,7)===key).reduce((s,x)=>s+Number(x.paid||0),0); ex=data.expenses.filter(x=>x.date?.slice(0,7)===key).reduce((s,x)=>s+Number(x.amount||0),0); jc=data.jobs.filter(x=>x.date?.slice(0,7)===key).reduce((s,x)=>s+Number(x.cost||0),0);
+  }else{
+    gp=data.invoices.filter(x=>(x.created_at||'').slice(0,4)===key).reduce((s,x)=>s+invoiceGrossProfit(x),0); inc=data.invoices.filter(x=>(x.created_at||'').slice(0,4)===key).reduce((s,x)=>s+Number(x.total||0),0); col=data.invoices.filter(x=>(x.created_at||'').slice(0,4)===key).reduce((s,x)=>s+Number(x.paid||0),0); ex=data.expenses.filter(x=>x.date?.slice(0,4)===key).reduce((s,x)=>s+Number(x.amount||0),0); jc=data.jobs.filter(x=>x.date?.slice(0,4)===key).reduce((s,x)=>s+Number(x.cost||0),0);
+  }
+  return {inc,col,ex:ex+jc,gp,net:inc-ex-jc};
+}
+function renderReportChart(period, labels, values){
+  const max=Math.max(1,...values.flatMap(v=>[v.inc,v.ex,Math.max(0,v.net)]));
+  const cols=labels.map((label,i)=>{const v=values[i],h=x=>Math.max(2,(Math.max(0,x)/max)*185);return `<div class="bar-col"><div class="bar-value">${money(v.net).replace(/^\\S+ /,'')}</div><div class="bar-stack"><div class="bar income" style="height:${h(v.inc)}px" title="Income ${money(v.inc)}"></div><div class="bar expense" style="height:${h(v.ex)}px" title="Expense ${money(v.ex)}"></div><div class="bar net" style="height:${h(v.net)}px" title="Net ${money(v.net)}"></div></div><div class="bar-label">${label}</div></div>`}).join('');
+  return `<div class="chart-head"><div><b>${period==='daily'?'Daily progress':period==='monthly'?'Monthly progress':'Yearly progress'}</b><div class="hint">Income • Expenses • Net</div></div></div><div class="chart">${cols}</div><div class="chart-legend"><span><i class="legend-dot legend-income"></i>Income</span><span><i class="legend-dot legend-expense"></i>Expenses</span><span><i class="legend-dot legend-net"></i>Net</span></div>`;
+}
+function renderReports(){
+  const period=document.getElementById('reportPeriod')?.value||'monthly';
+  const selectedMonth=document.getElementById('reportMonth')?.value||new Date().toISOString().slice(0,7);
+  reportMonth.value=selectedMonth;
+  const keys=[],labels=[];
+  if(period==='daily'){
+    const [y,m]=selectedMonth.split('-').map(Number),days=new Date(y,m,0).getDate();
+    for(let d=1;d<=days;d++){const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;keys.push(key);labels.push(String(d));}
+  }else if(period==='monthly'){
+    const y=selectedMonth.slice(0,4);for(let m=1;m<=12;m++){keys.push(`${y}-${String(m).padStart(2,'0')}`);labels.push(new Date(y,m-1,1).toLocaleString('en',{month:'short'}));}
+  }else{
+    const years=new Set();data.invoices.forEach(x=>{if(x.created_at)years.add(x.created_at.slice(0,4))});data.expenses.forEach(x=>{if(x.date)years.add(x.date.slice(0,4))});data.jobs.forEach(x=>{if(x.date)years.add(x.date.slice(0,4))});const current=new Date().getFullYear();years.add(String(current));[...years].sort().forEach(y=>{keys.push(y);labels.push(y)});
+  }
+  const vals=keys.map(k=>reportMetricsForPeriod(period,k));
+  const currentKey=period==='daily'?new Date().toISOString().slice(0,10):period==='monthly'?selectedMonth:String(new Date().getFullYear());
+  const cur=reportMetricsForPeriod(period,currentKey);
+  reportKpis.innerHTML=[['Income',money(cur.inc)],['Collected',money(cur.col)],['Cost of Sold Items',money(Math.max(0,cur.inc-cur.gp))],['Gross Profit',money(cur.gp)],['Expenses',money(cur.ex)],['Net',money(cur.net)]].map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="kpi">${x[1]}</div></div>`).join('');
+  reportChart.innerHTML=renderReportChart(period,labels,vals);
+  reportBody.innerHTML=`<p><b>View:</b> ${period==='daily'?'Daily — '+selectedMonth:period==='monthly'?'Monthly — '+selectedMonth.slice(0,4):'Yearly'}</p><p>Income: <b>${money(cur.inc)}</b></p><p>Cash collected: <b>${money(cur.col)}</b></p><p>Cost of sold items: <b>${money(Math.max(0,cur.inc-cur.gp))}</b></p><p>Gross profit: <b>${money(cur.gp)}</b></p><p>Expenses: <b>${money(cur.ex)}</b></p><p>Net result: <b>${money(cur.net)}</b></p>`;
+}
+function renderReminders(){let r=data.invoices.filter(i=>i.balance>0);reminderTable.innerHTML=r.length?`<table><tr><th>Customer</th><th>Invoice</th><th>Balance</th><th>Due</th><th></th></tr>${r.map(i=>`<tr><td>${esc(customerName(i.customer_id))}</td><td>${i.invoice_no||''}</td><td>${money(i.balance)}</td><td>${i.due_date||'-'}</td><td>${esc(i.payment_method||'-')}</td><td><button class="secondary" onclick="waReminder('${i.id}')">Send WhatsApp</button></td></tr>`).join('')}</table>`:'<div class="empty">No outstanding invoices 🎉</div>'}
+function printInvoice(id){let i=data.invoices.find(x=>x.id===id),c=customer(i.customer_id),logo=data.settings.logo_data?`<img src="${data.settings.logo_data}" style="max-height:75px;max-width:190px;object-fit:contain">`:'';printArea.innerHTML=`<div class="invoice"><div class="top"><div>${logo}<h1>${esc(data.settings.name)}</h1><div>${esc(data.settings.address||'')}</div><div>${esc(data.settings.phone||'')}</div></div><div style="text-align:right"><b style="font-size:20px">INVOICE</b><br><b>${esc(i.invoice_no||'')}</b><br>${new Date(invoiceDate(i)+'T00:00:00').toLocaleDateString('en-GB')}<br>${i.due_date?'Due: '+esc(i.due_date):''}</div></div><h3>Bill To</h3><p><b>${esc(c.name)}</b><br>${esc(c.phone||'')}<br>${esc(c.email||'')}<br>${esc(c.address||'')}</p><table><tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>${i.items.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${money(x.price)}</td><td>${money(x.qty*x.price)}</td></tr>`).join('')}</table><div style="margin-top:15px;text-align:right"><div>Subtotal: <b>${money(i.items.reduce((s,x)=>s+x.qty*x.price,0))}</b></div><div>Discount: <b>${money(i.discount)}</b></div><div style="font-size:20px;margin-top:6px">Total: <b>${money(i.total)}</b></div><div>Paid / Advance: <b>${money(i.paid)}</b></div><div class="total">Balance: ${money(i.balance)}</div></div><p>Payment method: <b>${esc(i.payment_method||'')}</b></p>${cleanInvoiceNotes(i.notes)?`<p><b>Notes:</b> ${esc(cleanInvoiceNotes(i.notes))}</p>`:''}<p style="margin-top:55px;border-top:1px solid #ddd;padding-top:12px">Thank you for choosing ${esc(data.settings.name)}.</p></div>`;window.print()}
+function waReminder(id){
+  const i=data.invoices.find(x=>x.id===id),c=customer(i.customer_id);let p=(c.phone||'').replace(/\D/g,'');if(p.startsWith('0'))p='94'+p.slice(1);if(!p)return alert('Customer phone number missing');
+  const lines=(i.items||[]).map(x=>`• ${x.name} × ${x.qty} — ${money(x.qty*x.price)}`).join('\n');
+  const msg=`${data.settings.name}\n\nInvoice: ${i.invoice_no||'-'}\nCustomer: ${c.name}\n\nItems:\n${lines||'• Services / Items'}\n\nTotal Amount: ${money(i.total)}\nAdvance Paid: ${money(i.paid)}\nBalance Due: ${money(i.balance)}${i.due_date?`\nDue Date: ${i.due_date}`:''}\n\nThank you for choosing ${data.settings.name}.`;
+  openModal('WhatsApp Message',`<div class="card"><textarea id="waEnglish" style="min-height:280px;white-space:pre-wrap">${esc(msg)}</textarea><button class="primary" style="margin-top:10px" onclick="sendWa('${p}','waEnglish')">Send WhatsApp</button></div>`)
+}
+function sendWa(phone,field){window.open(`https://wa.me/${phone}?text=${encodeURIComponent(document.getElementById(field).value)}`,'_blank')}
+
+async function importPhoneContact(type){
+  if(!isAdmin)return alert('Administrator access required.');
+  if(!('contacts' in navigator) || typeof navigator.contacts.select!=='function')return alert('Direct phone contact import is not supported by this browser. On Android Chrome, try this button. On iPhone/Safari, export the contact as a .vcf file and use “Choose .vcf”.');
+  try{const picked=await navigator.contacts.select(['name','tel','email'],{multiple:false});const c=picked?.[0];if(!c)return;const name=Array.isArray(c.name)?c.name.join(' ').trim():String(c.name||''),phone=Array.isArray(c.tel)?(c.tel.find(Boolean)||''):String(c.tel||''),email=Array.isArray(c.email)?(c.email.find(Boolean)||''):String(c.email||'');const f=document.getElementById(type==='customer'?'customerForm':'supplierForm');if(!f)return;f.querySelector('[name="name"]').value=name;f.querySelector('[name="phone"]').value=phone;if(type==='customer'&&f.querySelector('[name="email"]'))f.querySelector('[name="email"]').value=email;toast('Contact imported ✓')}catch(err){if(err?.name!=='AbortError')alert('Could not read the contact. Please try the .vcf option instead.')}}
+async function importVCard(event,type){if(!isAdmin)return alert('Administrator access required.');const file=event.target.files?.[0];if(!file)return;try{const text=await file.text(),block=(text.match(/BEGIN:VCARD[\\s\\S]*?END:VCARD/i)||[])[0]||text;const get=(re)=>{const m=block.match(re);return m?m[1].replace(/\\\\n/g,' ').replace(/\\\\,/g,',').replace(/\\\\;/g,';').trim():''};let name=get(/(?:^|\\n)FN(?:;[^:]*)?:(.*)/i);if(!name){const n=get(/(?:^|\\n)N(?:;[^:]*)?:(.*)/i);name=n.split(';').filter(Boolean).reverse().join(' ').trim()}const phone=get(/(?:^|\\n)TEL(?:;[^:]*)?:(.*)/i),email=get(/(?:^|\\n)EMAIL(?:;[^:]*)?:(.*)/i);const f=document.getElementById(type==='customer'?'customerForm':'supplierForm');if(!f)return;f.querySelector('[name="name"]').value=name;f.querySelector('[name="phone"]').value=phone;if(type==='customer'&&f.querySelector('[name="email"]'))f.querySelector('[name="email"]').value=email;toast('vCard imported ✓')}catch(err){alert('Could not read this vCard file.')}event.target.value=''}
+
+function previewLogo(e){const f=e.target.files?.[0];if(!f)return;if(f.size>1024*1024)return alert('Please use a logo smaller than 1 MB.');const r=new FileReader();r.onload=()=>{data.settings.logo_data=r.result;logoPreview.innerHTML=`<img src="${r.result}" style="max-height:70px;max-width:180px;border-radius:8px;border:1px solid var(--line)"><br><span>New logo selected. Click Save Settings.</span>`};r.readAsDataURL(f)}
+async function saveSettings(e){e.preventDefault();if(!isAdmin)return alert('Administrator access required.');let o=Object.fromEntries(new FormData(e.target));o.id=1;o.logo_data=data.settings?.logo_data||'';let {error}=await sb.from('business_settings').upsert(o,{onConflict:'id'});if(error)alert(error.message);else{toast('Business settings saved ✓');await loadAll()}}
+
+function renderAdmin(){
+  if(!isAdmin)return;
+  adminKpis.innerHTML=[['Customers',data.customers.length],['Jobs',data.jobs.length],['Invoices',data.invoices.length],['Expenses',data.expenses.length]].map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="kpi">${x[1]}</div></div>`).join('');
+  sb.from('profiles').select('id,email,role,created_at').order('created_at',{ascending:true}).then(({data:rows,error})=>{
+    if(error){adminUsers.innerHTML=`<div class="hint">${esc(error.message)}</div>`;return}
+    adminUsers.innerHTML=rows?.length?`<table><tr><th>Email</th><th>Role</th><th>Created</th><th>Action</th></tr>${rows.map(u=>`<tr><td>${esc(u.email||'')}</td><td><span class="badge ${u.role==='admin'?'paid':''}">${esc(u.role)}</span></td><td>${u.created_at?new Date(u.created_at).toLocaleDateString():''}</td><td>${u.id===currentUser?.id?'<span class="status">Current account</span>':`<select onchange="changeUserRole('${u.id}',this.value)"><option value="staff" ${u.role==='staff'?'selected':''}>Staff</option><option value="admin" ${u.role==='admin'?'selected':''}>Administrator</option></select>`}</td></tr>`).join('')}</table>`:'<div class="empty">No user accounts.</div>';
+  });
+}
+async function changeUserRole(id,role){
+  if(!isAdmin)return alert('Administrator access required.');
+  if(id===currentUser?.id)return alert('For safety, change your own role from SQL only.');
+  if(!confirm(`Change this account to ${role}?`))return;
+  let {error}=await sb.rpc('set_user_role',{target_user:id,new_role:role});
+  if(error)return alert(error.message);
+  toast('User role updated ✓');renderAdmin();
+}
+async function deleteRecord(table,id,label){
+  if(!isAdmin)return alert('Administrator access required.');
+  if(!confirm(`Delete this ${label}? This cannot be undone.`))return;
+  const oldInvoice=table==='invoices'?data.invoices.find(x=>x.id===id):null;
+  let {error}=await sb.from(table).delete().eq('id',id);
+  if(error)return alert(error.message);
+  if(oldInvoice){const st=catalogState();invoiceStockDelta(oldInvoice.items||[],1,st);await saveCatalog(st)}
+  toast(`${label} deleted ✓`);await loadAll();render();
+}
+async function clearAllBusinessData(){
+  if(!isAdmin)return alert('Administrator access required.');
+  if(!confirm('Delete ALL customers, jobs, invoices and expenses from the cloud database?'))return;
+  if(!confirm('FINAL WARNING: this cannot be undone. Continue?'))return;
+  for(const table of ['invoices','jobs','expenses','customers']){
+    let {error}=await sb.from(table).delete().not('id','is',null);
+    if(error)return alert(error.message);
+  }
+  toast('All business data cleared ✓');await loadAll();render();
+}
+function exportBackup(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='prabhash-mobile-electrical-backup.json';a.click()}
+boot();
+</script>
+</body>
+</html>
