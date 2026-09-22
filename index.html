@@ -104,7 +104,7 @@ function customerTransactions(){return catalogState().customer_transactions||[]}
 function stockOf(name){const x=catalog().find(i=>String(i.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());return Number(x?.qty)||0}
 function todayISO(){return new Date().toISOString().slice(0,10)}
 function invoiceDate(inv){const m=String(inv?.notes||'').match(/\[\[invoice_date:(\d{4}-\d{2}-\d{2})\]\]/);return m?m[1]:String(inv?.created_at||'').slice(0,10)||todayISO()}
-function cleanInvoiceNotes(notes){return String(notes||'').replace(/\[\[invoice_date:\d{4}-\d{2}-\d{2}\]\]\s*/,'').replace(/\[\[PAYMENTS:[\s\S]*?\]\]\s*/,'').trim()}
+function cleanInvoiceNotes(notes){return String(notes||'').replace(/\[\[invoice_date:\d{4}-\d{2}-\d{2}\]\]\s*/,'').replace(/\[\[PAYMENTS:[\s\S]*?\]\]\s*/,'').replace(/\[\[CREDIT_APPLIED:[\d.]+\]\]\s*/,'').trim()}
 function invoicePayments(inv){
   const raw=String(inv?.notes||'');
   const m=raw.match(/\[\[PAYMENTS:([\s\S]*?)\]\]/);
@@ -113,7 +113,12 @@ function invoicePayments(inv){
   return paid>0?[{date:invoiceDate(inv),amount:paid,method:inv?.payment_method||'Cash'}]:[];
 }
 function paymentTotal(inv){return invoicePayments(inv).reduce((s,x)=>s+Math.max(0,Number(x.amount)||0),0)}
-function invoiceCreditApplied(inv){return Math.max(0,Number(inv?.account_credit_applied)||0)}
+function invoiceCreditApplied(inv){
+  const direct=Number(inv?.account_credit_applied);
+  if(Number.isFinite(direct)&&direct>0)return direct;
+  const m=String(inv?.notes||'').match(/\[\[CREDIT_APPLIED:([\d.]+)\]\]/);
+  return m?Math.max(0,Number(m[1])||0):0;
+}
 function invoiceBalance(inv){return Number(inv?.total||0)-paymentTotal(inv)-invoiceCreditApplied(inv)}
 function manualCustomerBalance(customerId){
   if(!customerId)return 0;
@@ -370,8 +375,8 @@ async function saveInvoice(e,id){
   const creditApplied=Math.min(Math.max(-previous,0),total);
   const balance=total-paid-creditApplied;
   let notes=cleanInvoiceNotes(f.get('notes')||'');
-  notes=`[[invoice_date:${f.get('invoice_date')||todayISO()}]][[PAYMENTS:${JSON.stringify(payments)}]]${notes?' '+notes:''}`;
-  const o={invoice_no:f.get('invoice_no')||nextInvoiceNo(),customer_id:f.get('customer_id')||null,due_date:f.get('due_date')||null,payment_method:f.get('payment_method')||old?.payment_method||'Cash',items,discount,paid,account_credit_applied:creditApplied,notes,total,balance,status:balance<0?'Overpaid':balance===0?'Paid':paid>0?'Partial':'Unpaid'};
+  notes=`[[invoice_date:${f.get('invoice_date')||todayISO()}]][[PAYMENTS:${JSON.stringify(payments)}]][[CREDIT_APPLIED:${creditApplied.toFixed(2)}]]${notes?' '+notes:''}`;
+  const o={invoice_no:f.get('invoice_no')||nextInvoiceNo(),customer_id:f.get('customer_id')||null,due_date:f.get('due_date')||null,payment_method:f.get('payment_method')||old?.payment_method||'Cash',items,discount,paid,notes,total,balance,status:balance<0?'Overpaid':balance===0?'Paid':paid>0?'Partial':'Unpaid'};
   const result=id?await sb.from('invoices').update(o).eq('id',id):await sb.from('invoices').insert(o); if(result.error)return alert(result.error.message);
   if(old)invoiceStockDelta(old.items||[],1,st); invoiceStockDelta(items,-1,st); await saveCatalog(st);
   closeModal();await loadAll();render();toast(balance<0?'Invoice saved — change due ✓':'Invoice saved ✓');
