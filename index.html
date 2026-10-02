@@ -184,6 +184,83 @@ nav.quick-nav{display:none!important}.app-main{margin-left:0!important;max-width
 .employee-tip{border-color:rgba(168,85,247,.22)!important;background:linear-gradient(145deg,rgba(46,27,84,.35),rgba(15,12,22,.75))!important}.employee-kicker{color:#a99bb8!important}
 .invoice .top{border-bottom-color:#8b3dff!important}.invoice h1{color:#8b3dff!important}
 @media(max-width:760px){.dashboard-branding{flex-direction:column;gap:8px;text-align:center;padding:8px 0}.dashboard-brand-logo{width:180px!important;height:120px!important}.dashboard-welcome{text-align:center}.dashboard-menu{grid-template-columns:repeat(2,minmax(120px,1fr));gap:10px}.dashboard-menu-card{min-height:140px;padding:17px 14px}.dashboard-menu-icon{width:58px;height:58px;font-size:30px;border-radius:16px}.dashboard-menu-title{font-size:13px}.dashboard-menu-sub{font-size:9px}}
+
+
+/* ===== Prabhash V6 — Compact Dashboard + Quick Invoice Cockpit ===== */
+.modal{padding:8px!important;align-items:center!important}
+.modalbox{width:min(1120px,96vw)!important;max-width:1120px!important;height:min(92vh,840px)!important;max-height:calc(100vh - 16px)!important;overflow:hidden!important;padding:13px!important;border-radius:15px!important;display:flex!important;flex-direction:column!important}
+.modalbox>.space{flex:0 0 auto!important;margin-bottom:8px!important}
+#modalBody{min-height:0;overflow:hidden;display:flex;flex:1 1 auto;flex-direction:column}
+#modalBody>.card,#modalBody>form{min-height:0}
+/* Dashboard menu: small icon only, compact touch targets */
+.dashboard-menu{grid-template-columns:repeat(6,minmax(120px,1fr))!important;gap:7px!important;margin-top:10px!important}
+.dashboard-menu-card{min-height:54px!important;height:54px!important;padding:7px 9px!important;display:flex!important;align-items:center!important;gap:9px!important;border-radius:12px!important;text-align:left!important}
+.dashboard-menu-card::after,.dashboard-menu-card::before{display:none!important}
+.dashboard-menu-icon{width:auto!important;height:auto!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;font-size:21px!important;line-height:1!important;flex:0 0 24px!important;transform:none!important}
+.dashboard-menu-card:hover .dashboard-menu-icon{background:transparent!important;border:0!important;transform:scale(1.06)!important}
+.dashboard-menu-title{font-size:11px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis}
+.dashboard-menu-sub{display:none!important}
+.dashboard-menu-card{background:rgba(255,255,255,.018)!important;border-color:rgba(168,85,247,.12)!important;box-shadow:none!important}
+.dashboard-menu-card:hover{transform:translateY(-1px)!important;border-color:rgba(168,85,247,.34)!important;background:rgba(139,61,255,.055)!important;box-shadow:none!important}
+/* Invoice uses the available screen as a quick cockpit; only the item list scrolls. */
+.rs-invoice-form.rs-invoice-cockpit{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;gap:8px!important}
+.rs-invoice-workspace{display:grid!important;grid-template-columns:42px minmax(0,1fr) minmax(248px,300px)!important;gap:9px!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important}
+.rs-invoice-tools{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:6px 0;border-right:1px solid rgba(168,85,247,.10)}
+.rs-invoice-tool{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;padding:0!important;border-radius:10px!important;display:grid!important;place-items:center!important;background:transparent!important;border:1px solid transparent!important;color:#b6aec5!important;box-shadow:none!important;cursor:pointer}
+.rs-invoice-tool span{font-size:17px;line-height:1}
+.rs-invoice-tool:hover,.rs-invoice-tool.active{background:rgba(139,61,255,.11)!important;border-color:rgba(168,85,247,.25)!important;color:#fff!important;transform:none!important}
+.rs-invoice-center{display:flex;flex-direction:column;gap:7px;min-width:0;min-height:0;overflow:hidden}
+.rs-invoice-meta{grid-template-columns:1.05fr 1fr 1fr 1.05fr!important;gap:6px!important}
+.rs-invoice-customer{padding:7px 8px!important}
+.rs-invoice-customer-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rs-invoice-section-hint{font-size:9px;color:#8f84a0}
+.rs-invoice-customer .row{flex-wrap:nowrap!important}
+.rs-invoice-main{display:flex!important;flex-direction:column!important;gap:7px!important;min-height:0!important;flex:1 1 auto!important;overflow:hidden!important}
+.rs-invoice-items{flex:1 1 auto!important;min-height:0!important;padding:8px!important}
+.rs-invoice-itemrows{overflow:auto!important;min-height:0!important;padding-right:3px}
+.rs-invoice-items .invoice-item-row{grid-template-columns:minmax(180px,1fr) 58px 105px 78px 64px!important;gap:5px!important;margin-bottom:4px!important}
+.rs-invoice-items .invoice-item-row input{height:34px!important}
+.rs-invoice-items .invoice-item-row button{height:34px!important;padding:6px 7px!important;font-size:10px!important}
+.rs-invoice-entry{grid-template-columns:110px minmax(150px,1fr)!important;gap:6px!important;align-content:start!important;flex:0 0 auto!important}
+.rs-invoice-entry .full{grid-column:1/-1}
+.rs-invoice-entry textarea{height:43px!important;min-height:43px!important}
+.rs-invoice-history{grid-column:1/-1!important}
+.rs-invoice-summary{height:100%!important;min-width:0!important;overflow:auto!important;padding:12px!important;display:flex!important;flex-direction:column!important;justify-content:flex-start!important;border-radius:13px!important;background:linear-gradient(145deg,rgba(27,16,46,.72),rgba(12,9,18,.96))!important;border:1px solid rgba(168,85,247,.18)!important}
+.rs-summary-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:900;color:#f5f1fb;margin-bottom:6px}
+.rs-summary-live{font-size:8px;letter-spacing:.11em;padding:3px 5px;border-radius:999px;color:#8eecc4;background:rgba(49,196,141,.08);border:1px solid rgba(49,196,141,.18)}
+.rs-invoice-summary .sum-row{padding:5px 0!important;font-size:10.5px!important}
+.rs-invoice-summary .sum-total{padding:9px 0!important;font-size:17px!important;border-bottom:1px solid rgba(168,85,247,.17)!important;color:#efe5ff!important}
+.rs-invoice-summary .sum-total b{font-size:18px!important}
+.sum-divider{height:1px;background:rgba(255,255,255,.05);margin:2px 0}
+.rs-invoice-summary .sum-balance-row{margin-top:2px;padding:10px 8px!important;border-radius:10px;background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.14)!important}
+.rs-invoice-summary .sum-balance{font-size:19px!important;color:#c084fc!important}
+.rs-invoice-footer{justify-content:flex-end!important;align-items:center!important}
+.rs-invoice-cancel{min-width:85px!important}
+.rs-invoice-footer .primary{min-width:200px!important}
+@media(max-width:980px){
+  .dashboard-menu{grid-template-columns:repeat(4,minmax(115px,1fr))!important}
+  .rs-invoice-workspace{grid-template-columns:38px minmax(0,1fr) 235px!important}
+  .rs-invoice-tool{width:31px!important;height:31px!important;min-width:31px!important;min-height:31px!important}
+}
+@media(max-width:760px){
+  .dashboard-menu{grid-template-columns:repeat(3,minmax(100px,1fr))!important}
+  .rs-invoice-workspace{grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important}
+  .rs-invoice-tools{order:0;flex-direction:row;justify-content:flex-start;border-right:0;border-bottom:1px solid rgba(168,85,247,.10);padding:0 0 6px;overflow-x:auto}
+  .rs-invoice-center{order:1}
+  .rs-invoice-summary{order:2;height:auto!important;max-height:185px!important}
+  .rs-invoice-entry{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:520px){
+  .dashboard-menu{grid-template-columns:repeat(2,minmax(120px,1fr))!important}
+  .dashboard-menu-card{height:50px!important;min-height:50px!important}
+  .rs-invoice-meta{grid-template-columns:1fr 1fr!important}
+  .rs-invoice-entry{grid-template-columns:1fr!important}
+  .rs-invoice-entry .full{grid-column:auto}
+  .rs-invoice-items .invoice-item-row{grid-template-columns:minmax(130px,1fr) 52px 92px!important}
+  .rs-invoice-items .invoice-item-row button{width:100%!important}
+  .rs-invoice-summary{max-height:200px!important}
+}
+
 </style>
 
 <style id="redshine-unique-ui">
@@ -862,32 +939,86 @@ async function saveInlineCustomer(){
   box?.querySelectorAll('input').forEach(x=>x.value='');
   toast('Customer added to invoice ✓');
 }
+function focusInvoicePart(target){
+  const map={
+    customer:'#invoiceCustomerSelect',
+    item:'#invoiceItemRows .item-name',
+    discount:'#invoiceDiscount',
+    payment:'#invoicePaid',
+    notes:'#invoiceNotes'
+  };
+  if(target==='add'){
+    addInvoiceItem();
+    const n=document.querySelector('#invoiceItemRows .invoice-item-row:last-child .item-name');
+    n?.focus(); n?.scrollIntoView({block:'nearest'}); return;
+  }
+  const el=document.querySelector(map[target]||'');
+  if(el){el.focus();el.scrollIntoView({block:'nearest',behavior:'smooth'});}
+}
 function openInvoice(inv=null){
   let items=Array.isArray(inv?.items)&&inv.items.length?inv.items:[{name:'',qty:1,price:0}];
   let invNo=inv?.invoice_no||nextInvoiceNo(), d=invoiceDate(inv);
   const previous=inv?.customer_id?customerOutstanding(inv.customer_id,inv.id):0;
   const initialCredit=inv?invoiceCreditApplied(inv):Math.min(Math.max(-previous,0),Math.max(0,Number(inv?.total||0)));
   const previousText=previous>0?`${customerBalanceLabel(previous)}: <b>${money(previous)}</b>`:previous<0?`${customerBalanceLabel(previous)}: <b>${money(Math.abs(previous))}</b>`:'No previous balance / credit';
-  const history=inv?invoicePayments(inv):[];
-  openModal(inv?'Edit Invoice':'New Invoice',`<form id="invoiceForm" data-invoice-id="${inv?.id||''}" onsubmit="saveInvoice(event,'${inv?.id||''}')">
-  <div><label>Invoice No.</label><input name="invoice_no" value="${esc(invNo)}" readonly></div>
-  <div><label>Invoice Date</label><input type="date" name="invoice_date" value="${d}" required></div>
-  <div><label>Customer <span class="hint">(optional)</span></label><div class="row"><select name="customer_id" style="flex:1" onchange="updateInvoicePreviousBalance(this.value)"><option value="">— No customer / Walk-in —</option>${customerOptionsHtml(inv?.customer_id||'')}</select><button type="button" class="secondary" onclick="toggleInlineCustomer()">+ New Customer</button></div>
-  <div id="invoicePreviousBalance" class="hint" style="margin-top:9px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px">Select a customer to see previous account balance / credit.</div>
-  <div id="inlineCustomerBox" class="inline-customer"><div class="grid"><div><label>Name</label><input name="name" placeholder="Customer name"></div><div><label>Phone / WhatsApp</label><input name="phone" placeholder="07XXXXXXXX"></div><div><label>Email</label><input name="email"></div><div><label>Address</label><input name="address"></div></div><div class="row" style="margin-top:10px"><button type="button" class="primary" onclick="saveInlineCustomer()">Save Customer</button><button type="button" class="secondary" onclick="toggleInlineCustomer()">Cancel</button></div></div></div>
-  <div><label>Due date</label><input type="date" name="due_date" value="${inv?.due_date||''}"></div>
-  <div><label>Payment method</label><select name="payment_method"><option ${inv?.payment_method==='Cash'?'selected':''}>Cash</option><option ${inv?.payment_method==='Bank Transfer'?'selected':''}>Bank Transfer</option><option ${inv?.payment_method==='Card'?'selected':''}>Card</option><option ${inv?.payment_method==='Online'?'selected':''}>Online</option><option ${inv?.payment_method==='Other'?'selected':''}>Other</option></select></div>
-  <div id="invoiceItems" class="full"><div class="space"><label>Invoice Items</label><button type="button" class="secondary" onclick="addInvoiceItem()">+ Add Item</button></div><div id="invoiceItemRows" style="margin-top:8px">${items.map(invoiceItemRow).join('')}</div><div class="hint" style="margin-top:7px">Quantity is whole numbers only. Stock is checked for saved items. Saved items also track buy cost and selling price for profit calculation.</div></div>
-  <div><label>Discount</label><input id="invoiceDiscount" type="number" min="0" step="0.01" name="discount" value="${Number(inv?.discount)||0}" oninput="updateInvoiceTotals()"></div>
-  <div><label>${inv?'New payment / advance':'First payment / advance'}</label><input id="invoicePaid" type="number" min="0" step="0.01" name="paid" value="0" oninput="updateInvoiceTotals()"><div class="hint" style="margin-top:4px">${inv?'Enter only the new amount received now. Previous payments stay in history.':'Enter the amount received now.'}</div></div>
-  ${inv?`<div class="full card" style="padding:12px"><div class="space"><b>Payment History</b><b>Total Paid: ${money(paymentTotal(inv))}</b></div>${paymentHistoryHtml(inv)}</div>`:''}
-  <div class="full"><label>Notes</label><textarea name="notes" placeholder="Thank you / payment note / delivery note">${esc(cleanInvoiceNotes(inv?.notes))}</textarea></div>
-  <div class="full card" style="padding:12px;margin-top:2px"><div class="space"><span>Subtotal</span><b id="invoiceSubtotal">${money(items.reduce((s,x)=>s+(Number(x.qty)||0)*(Number(x.price)||0),0))}</b></div><div class="space"><span>Discount</span><b id="invoiceDiscountView">${money(Number(inv?.discount)||0)}</b></div><div class="space"><span>Total</span><b id="invoiceTotal">${money(Math.max(0,items.reduce((s,x)=>s+(Number(x.qty)||0)*(Number(x.price)||0),0)-(Number(inv?.discount)||0)))}</b></div><div class="space"><span>Credit applied</span><b id="invoiceCreditApplied">${money(initialCredit)}</b></div><div class="space"><span>New payment</span><b id="invoiceNewPayment">${money(0)}</b></div><div class="space"><span>Total paid</span><b id="invoiceTotalPaid">${money(paymentTotal(inv||{}))}</b></div><div class="space"><span>Balance / Change</span><b id="invoiceBalance">${money(Math.abs(Number(inv?.balance)||0))}</b></div><div id="overpaidNotice" style="display:none;margin-top:8px;padding:10px;border-radius:10px;background:#7c3aed;color:#fff;font-weight:800"></div></div>
-  <div class="full"><button class="primary">Save Invoice</button></div></form>`);
+  openModal(inv?'Edit Invoice':'New Invoice',`<form id="invoiceForm" class="rs-invoice-form rs-invoice-cockpit" data-invoice-id="${inv?.id||''}" onsubmit="saveInvoice(event,'${inv?.id||''}')">
+    <div class="rs-invoice-workspace">
+      <aside class="rs-invoice-tools" aria-label="Quick invoice tools">
+        <button type="button" class="rs-invoice-tool active" title="Customer" aria-label="Customer" onclick="focusInvoicePart('customer')"><span>👤</span></button>
+        <button type="button" class="rs-invoice-tool" title="Add item" aria-label="Add item" onclick="focusInvoicePart('add')"><span>＋</span></button>
+        <button type="button" class="rs-invoice-tool" title="Item" aria-label="Item" onclick="focusInvoicePart('item')"><span>📦</span></button>
+        <button type="button" class="rs-invoice-tool" title="Discount" aria-label="Discount" onclick="focusInvoicePart('discount')"><span>🏷️</span></button>
+        <button type="button" class="rs-invoice-tool" title="Payment" aria-label="Payment" onclick="focusInvoicePart('payment')"><span>💵</span></button>
+        <button type="button" class="rs-invoice-tool" title="Notes" aria-label="Notes" onclick="focusInvoicePart('notes')"><span>📝</span></button>
+      </aside>
+      <div class="rs-invoice-center">
+        <div class="rs-invoice-meta">
+          <div><label>Invoice No.</label><input name="invoice_no" value="${esc(invNo)}" readonly></div>
+          <div><label>Invoice Date</label><input type="date" name="invoice_date" value="${d}" required></div>
+          <div><label>Due date</label><input type="date" name="due_date" value="${inv?.due_date||''}"></div>
+          <div><label>Payment method</label><select name="payment_method"><option ${inv?.payment_method==='Cash'?'selected':''}>Cash</option><option ${inv?.payment_method==='Bank Transfer'?'selected':''}>Bank Transfer</option><option ${inv?.payment_method==='Card'?'selected':''}>Card</option><option ${inv?.payment_method==='Online'?'selected':''}>Online</option><option ${inv?.payment_method==='Other'?'selected':''}>Other</option></select></div>
+        </div>
+        <div id="invoiceCustomerSection" class="rs-invoice-customer">
+          <div class="rs-invoice-customer-head"><label>Customer <span class="hint">(optional)</span></label><span class="rs-invoice-section-hint">Walk-in is okay</span></div>
+          <div class="row" style="margin-top:4px">
+            <select id="invoiceCustomerSelect" name="customer_id" onchange="updateInvoicePreviousBalance(this.value)"><option value="">— No customer / Walk-in —</option>${customerOptionsHtml(inv?.customer_id||'')}</select>
+            <button type="button" class="secondary" onclick="toggleInlineCustomer()">+ New Customer</button>
+          </div>
+          <div id="invoicePreviousBalance" class="rs-invoice-previous hint">${previousText}</div>
+          <div id="inlineCustomerBox" class="inline-customer"><div class="grid"><div><label>Name</label><input name="name" placeholder="Customer name"></div><div><label>Phone / WhatsApp</label><input name="phone" placeholder="07XXXXXXXX"></div><div><label>Email</label><input name="email"></div><div><label>Address</label><input name="address"></div></div><div class="row" style="margin-top:7px"><button type="button" class="primary" onclick="saveInlineCustomer()">Save Customer</button><button type="button" class="secondary" onclick="toggleInlineCustomer()">Cancel</button></div></div>
+        </div>
+        <div class="rs-invoice-main">
+          <div id="invoiceItems" class="card rs-invoice-items">
+            <div class="space"><div><b>Items</b><div class="rs-invoice-tip">Type a few letters to pick a saved item quickly.</div></div><button type="button" class="secondary" onclick="addInvoiceItem()">+ Add Item</button></div>
+            <div id="invoiceItemRows" class="rs-invoice-itemrows">${items.map(invoiceItemRow).join('')}</div>
+          </div>
+          <div id="invoiceEntrySection" class="rs-invoice-entry">
+            <div><label>Discount</label><input id="invoiceDiscount" type="number" min="0" step="0.01" name="discount" value="${Number(inv?.discount)||0}" oninput="updateInvoiceTotals()"></div>
+            <div><label>${inv?'New payment / advance':'First payment / advance'}</label><input id="invoicePaid" type="number" min="0" step="0.01" name="paid" value="0" oninput="updateInvoiceTotals()"><div class="hint">Amount received now.</div></div>
+            ${inv?`<details class="rs-invoice-history"><summary>Payment History · Total Paid ${money(paymentTotal(inv))}</summary><div style="margin-top:5px">${paymentHistoryHtml(inv)}</div></details>`:''}
+            <div class="full"><label>Notes</label><textarea id="invoiceNotes" name="notes" placeholder="Payment note / delivery note">${esc(cleanInvoiceNotes(inv?.notes))}</textarea></div>
+          </div>
+        </div>
+      </div>
+      <aside class="rs-invoice-summary">
+        <div class="rs-summary-title"><span>Invoice Summary</span><span class="rs-summary-live">LIVE</span></div>
+        <div class="sum-row"><span>Subtotal</span><b id="invoiceSubtotal">${money(items.reduce((s,x)=>s+(Number(x.qty)||0)*(Number(x.price)||0),0))}</b></div>
+        <div class="sum-row"><span>Discount</span><b id="invoiceDiscountView">${money(Number(inv?.discount)||0)}</b></div>
+        <div class="sum-row sum-total"><span>Total Amount</span><b id="invoiceTotal">${money(Math.max(0,items.reduce((s,x)=>s+(Number(x.qty)||0)*(Number(x.price)||0),0)-(Number(inv?.discount)||0)))}</b></div>
+        <div class="sum-divider"></div>
+        <div class="sum-row"><span>Credit applied</span><b id="invoiceCreditApplied" class="sum-credit">${money(initialCredit)}</b></div>
+        <div class="sum-row"><span>New payment</span><b id="invoiceNewPayment">${money(0)}</b></div>
+        <div class="sum-row"><span>Total paid</span><b id="invoiceTotalPaid" class="sum-paid">${money(paymentTotal(inv||{}))}</b></div>
+        <div class="sum-row sum-balance-row"><span>Balance / Change</span><b id="invoiceBalance" class="sum-balance">${money(Math.abs(Number(inv?.balance)||0))}</b></div>
+        <div id="overpaidNotice" style="display:none"></div>
+      </aside>
+    </div>
+    <div class="rs-invoice-footer"><button type="button" class="secondary rs-invoice-cancel" onclick="closeModal()">Cancel</button><button class="primary">${inv?'Save Invoice Changes':'Save Invoice'}</button></div>
+  </form>`);
   updateInvoiceTotals();
   updateInvoicePreviousBalance(inv?.customer_id||'');
-
 }
+
 function addInvoiceItem(){const box=document.getElementById('invoiceItemRows');if(!box)return;box.insertAdjacentHTML('beforeend',invoiceItemRow({name:'',qty:1,price:0}));updateInvoiceTotals()}
 function removeInvoiceItem(btn){const rows=document.querySelectorAll('#invoiceItemRows .invoice-item-row');if(rows.length<=1){alert('At least one invoice item is required.');return}btn.closest('.invoice-item-row').remove();updateInvoiceTotals()}
 function readInvoiceItems(){return [...document.querySelectorAll('#invoiceItemRows .invoice-item-row')].map(row=>({name:row.querySelector('.item-name').value.trim(),cost:Math.max(0,Number(row.dataset.cost)||0),qty:Math.max(1,Math.round(Number(row.querySelector('.item-qty').value)||1)),price:Math.max(0,Number(row.querySelector('.item-price').value)||0)})).filter(x=>x.name||x.price>0)}
