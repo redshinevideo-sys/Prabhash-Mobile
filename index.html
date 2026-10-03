@@ -600,75 +600,6 @@ button.receive{background:#10382b!important;border-color:#1d694f!important}
   .rs-invoice-items .rs-quick-item-bar{grid-template-columns:minmax(0,1fr) 54px!important}
   .rs-invoice-items .invoice-item-row{grid-template-columns:54px 86px minmax(78px,1fr) 30px!important;grid-template-areas:"item item item remove" "qty price total remove"!important}
 }
-/* ===== FIX: Compact New/Edit Item popup + working save layout ===== */
-.modalbox.compact-modal{
-  width:min(560px,94vw)!important;
-  height:auto!important;
-  max-height:min(90vh,620px)!important;
-  overflow:auto!important;
-  padding:16px!important;
-}
-.modalbox.compact-modal #modalBody{
-  overflow:visible!important;
-  display:block!important;
-  flex:none!important;
-}
-.modalbox.compact-modal form{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-  min-height:0!important;
-}
-.modalbox.compact-modal form>div{
-  min-width:0!important;
-}
-.modalbox.compact-modal form .full{
-  grid-column:1/-1!important;
-}
-.modalbox.compact-modal label{
-  margin-bottom:4px!important;
-  font-size:12px!important;
-}
-.modalbox.compact-modal input,
-.modalbox.compact-modal select{
-  min-height:40px!important;
-}
-.rs-new-item-popup{
-  width:100%;
-}
-.rs-new-item-popup .popup-kicker{
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:.08em;
-  opacity:.75;
-  margin-bottom:8px;
-}
-.rs-new-item-popup .popup-grid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:10px!important;
-}
-.rs-new-item-popup .popup-grid .full{
-  grid-column:1/-1!important;
-}
-.rs-new-item-popup .hint{
-  font-size:11px!important;
-  line-height:1.35!important;
-}
-@media(max-width:560px){
-  .modalbox.compact-modal{
-    width:96vw!important;
-    padding:12px!important;
-  }
-  .modalbox.compact-modal form,
-  .rs-new-item-popup .popup-grid{
-    grid-template-columns:1fr!important;
-  }
-  .modalbox.compact-modal form .full,
-  .rs-new-item-popup .popup-grid .full{
-    grid-column:auto!important;
-  }
-}
 </style>
 
 </head>
@@ -718,29 +649,6 @@ function catalogState(){
   if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
   if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[],customer_transactions:Array.isArray(v.customer_transactions)?v.customer_transactions:[],supplier_transactions:Array.isArray(v.supplier_transactions)?v.supplier_transactions:[],profit_settings:v.profit_settings&&typeof v.profit_settings==='object'?v.profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:Array.isArray(v.profit_withdrawals)?v.profit_withdrawals:[],employees:Array.isArray(v.employees)?v.employees:[],employee_advances:Array.isArray(v.employee_advances)?v.employee_advances:[],salary_records:Array.isArray(v.salary_records)?v.salary_records:[],job_payments:Array.isArray(v.job_payments)?v.job_payments:[]};
   let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
-}
-async function saveCatalog(st){
-  const safe = st && typeof st === 'object' ? st : catalogState();
-  try{
-    const payload = {
-      id: 1,
-      item_catalog: safe
-    };
-    const {error} = await sb.from('business_settings').upsert(payload,{onConflict:'id'});
-    if(error){
-      console.error('Catalog save failed:', error);
-      localStorage.setItem('prabhash_item_catalog', JSON.stringify(safe.items||[]));
-      return false;
-    }
-    data.settings = {...(data.settings||{}), item_catalog:safe};
-    localStorage.setItem('prabhash_item_catalog', JSON.stringify(safe.items||[]));
-    return true;
-  }catch(err){
-    console.error('Catalog save failed:', err);
-    localStorage.setItem('prabhash_item_catalog', JSON.stringify(safe.items||[]));
-    alert('Could not save item: '+(err?.message||err));
-    return false;
-  }
 }
 function customerTransactions(){return catalogState().customer_transactions||[]}
 function jobPayments(){return catalogState().job_payments||[]}
@@ -894,40 +802,6 @@ function openCustomerHistory(customerId){
 }
 
 function catalog(){return catalogState().items}
-function checkInvoiceStock(items, st, oldItems=[]){
-  const requested={};
-  const restored={};
-  (Array.isArray(oldItems)?oldItems:[]).forEach(x=>{
-    const key=String(x?.name||'').trim().toLowerCase();
-    if(key) restored[key]=(restored[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
-  });
-  (Array.isArray(items)?items:[]).forEach(x=>{
-    const key=String(x?.name||'').trim().toLowerCase();
-    if(key) requested[key]=(requested[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
-  });
-  for(const key of Object.keys(requested)){
-    const item=(st?.items||[]).find(x=>String(x?.name||'').trim().toLowerCase()===key);
-    if(!item) continue;
-    const available=Math.max(0,Math.round(Number(item.qty)||0))+(restored[key]||0);
-    if(requested[key]>available){
-      return `Not enough stock for "${item.name}". Available: ${available}, requested: ${requested[key]}.`;
-    }
-  }
-  return '';
-}
-function invoiceStockDelta(items, direction, st){
-  if(!st || !Array.isArray(st.items)) return;
-  const delta={};
-  (Array.isArray(items)?items:[]).forEach(x=>{
-    const key=String(x?.name||'').trim().toLowerCase();
-    if(key) delta[key]=(delta[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
-  });
-  st.items.forEach(item=>{
-    const key=String(item?.name||'').trim().toLowerCase();
-    if(delta[key]) item.qty=Math.max(0,Math.round(Number(item.qty)||0)+(Number(direction)||0)*delta[key]);
-  });
-}
-
 function suppliers(){return catalogState().suppliers}
 function stockOf(name){const x=catalog().find(i=>String(i.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());return Number(x?.qty)||0}
 function todayISO(){return new Date().toISOString().slice(0,10)}
@@ -1041,18 +915,7 @@ async function loadAll(){
   if(isAdmin) renderAdmin();
 }
 function customerName(id){return data.customers.find(x=>x.id===id)?.name||'Walk-in / No customer'}function customer(id){return data.customers.find(x=>x.id===id)||{name:'Walk-in / No customer',phone:'',email:'',address:'Kalahagala'}}
-function openModal(t,b){
-  modalTitle.textContent=t;
-  modalBody.innerHTML=b;
-  const box=modal.querySelector('.modalbox');
-  if(box) box.classList.toggle('compact-modal', /^(New Item|Edit Item)$/.test(String(t||'')));
-  modal.classList.add('open');
-}
-function closeModal(){
-  modal.classList.remove('open');
-  const box=modal.querySelector('.modalbox');
-  if(box) box.classList.remove('compact-modal');
-}
+function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('open')}function closeModal(){modal.classList.remove('open')}
 function contactImportControls(type){return `<div class="full" style="margin-top:4px"><div class="row" style="gap:8px;align-items:center"><button type="button" class="secondary" onclick="importPhoneContact('${type}')">📱 Import Phone Contact</button><label class="secondary" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="file" accept=".vcf,text/vcard" style="display:none" onchange="importVCard(event,'${type}')">📇 Choose .vcf</label></div><div class="hint" style="margin-top:5px">On supported phones, Import Phone Contact opens your saved contacts. If unavailable, use a .vcf contact file.</div></div>}`}
 function openCustomer(c=null){openModal(c?'Edit Customer':'New Customer',`<form id="customerForm" onsubmit="saveCustomer(event,'${c?.id||''}')"><div><label>Name</label><input name="name" required value="${esc(c?.name)}"></div>${isAdmin?`<div><label>Phone / WhatsApp</label><input name="phone" value="${esc(c?.phone)}"></div>`:''}<div><label>Email</label><input name="email" value="${esc(c?.email)}"></div><div><label>Address</label><input name="address" value="${esc(c?.address)}"></div>${isAdmin?contactImportControls('customer'):''}<div class="full"><button class="primary">Save</button></div></form>`)}
 async function saveCustomer(e,id){e.preventDefault();let o=Object.fromEntries(new FormData(e.target));if(!id){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey(o));if(existing){closeModal();toast('This customer already exists — existing account kept ✓');return;}}let q=id?sb.from('customers').update(o).eq('id',id):sb.from('customers').insert(o);let {error}=await q;if(error)return alert(error.message);closeModal();await loadAll();render()}
@@ -1139,51 +1002,8 @@ function addQuickInvoiceItem(){
   const box=document.getElementById('quickInvoiceSuggestions');if(box){box.innerHTML='';box.classList.remove('open');}
   input?.focus();
 }
-let pendingInvoiceItemDraft=null;
-function captureInvoiceDraft(){
-  const form=document.getElementById('invoiceForm');
-  if(!form)return null;
-  const invId=form.getAttribute('data-invoice-id')||'';
-  const original=invId?data.invoices.find(x=>x.id===invId):null;
-  return {
-    id:invId,
-    original,
-    invoice_no:form.querySelector('[name=invoice_no]')?.value||'',
-    invoice_date:form.querySelector('[name=invoice_date]')?.value||'',
-    due_date:form.querySelector('[name=due_date]')?.value||'',
-    payment_method:form.querySelector('[name=payment_method]')?.value||'Cash',
-    customer_id:form.querySelector('[name=customer_id]')?.value||'',
-    discount:Number(form.querySelector('[name=discount]')?.value)||0,
-    paid:Number(form.querySelector('[name=paid]')?.value)||0,
-    notes:form.querySelector('[name=notes]')?.value||'',
-    items:readInvoiceItems()
-  };
-}
-function restoreInvoiceDraft(draft,newItem){
-  if(!draft)return;
-  const form=document.getElementById('invoiceForm');
-  if(!form)return;
-  const set=(name,value)=>{const el=form.querySelector(`[name="${name}"]`);if(el)el.value=value??'';};
-  set('invoice_no',draft.invoice_no);
-  set('invoice_date',draft.invoice_date);
-  set('due_date',draft.due_date);
-  set('payment_method',draft.payment_method||'Cash');
-  set('customer_id',draft.customer_id||'');
-  set('discount',draft.discount||0);
-  set('paid',draft.paid||0);
-  set('notes',draft.notes||'');
-  const box=document.getElementById('invoiceItemRows');
-  if(box){
-    box.innerHTML='';
-    [...(draft.items||[]),newItem].forEach(it=>addInvoiceItem(it));
-  }
-  updateInvoiceTotals();
-  updateInvoicePreviousBalance(draft.customer_id||'');
-  setTimeout(()=>document.getElementById('quickInvoiceItem')?.focus(),40);
-}
 function openNewInvoiceItemModal(prefill=''){
   if(!isAdmin)return alert('Administrator access required to add a saved item.');
-  pendingInvoiceItemDraft=captureInvoiceDraft();
   openModal('New Item',`<div class="rs-new-item-popup">
     <div class="popup-kicker">SAVE ITEM + ADD TO INVOICE</div>
     <form onsubmit="saveNewInvoiceItemAndAdd(event)">
@@ -1213,17 +1033,8 @@ async function saveNewInvoiceItemAndAdd(e){
   st.items.push({name,cost,price,qty,supplier:''});
   const ok=await saveCatalog(st);
   if(!ok)return;
-  const newItem={name,qty:1,price,cost};
-  const draft=pendingInvoiceItemDraft;
-  pendingInvoiceItemDraft=null;
   closeModal();
-  if(draft){
-    const base=draft.original?{...draft.original,items:draft.items}:null;
-    openInvoice(base);
-    restoreInvoiceDraft(draft,newItem);
-  }else{
-    addInvoiceItem(newItem);
-  }
+  addInvoiceItem({name,qty:1,price,cost});
   const input=document.getElementById('quickInvoiceItem');if(input){input.value='';input.focus();}
 }
 function invoiceItemNameInput(input){
@@ -1472,7 +1283,7 @@ function jobWhatsApp(id){
   const j=data.jobs.find(x=>x.id===id),c=customer(j?.customer_id);if(!j||!c)return;
   let p=String(c.phone||'').replace(/\D/g,'');if(p.startsWith('0'))p='94'+p.slice(1);if(!p)return alert('Customer phone number missing');
   const total=Number(j.total||0),paid=jobPaymentTotal(j.id),balance=jobBalance(j);
-  const msg=`${data.settings.name}\n\nJob / Order: ${j.service||'-'}\nCustomer: ${c.name}\n\nDate: ${j.date||'-'}\nStatus: ${j.status||'-'}\n\nTotal Amount: ${money(total)}${('paid' in j)?`\nAdvance Paid: ${money(paid)}\nBalance Due: ${money(balance)}`:''}${j.notes?`\n\nNotes:\n${j.notes}`:''}\n\nThank you for choosing ${data.settings.name}.`;
+  const msg=`${data.settings.name}\n\nJob / Order: ${j.service||'-'}\nCustomer: ${c.name}\n\nDate: ${j.date||'-'}\nStatus: ${j.status||'-'}\n\nTotal Amount: ${money(total)}\nAdvance / Paid: ${money(paid)}\nRemaining Balance: ${money(balance)}${j.notes?`\n\nNotes:\n${j.notes}`:''}\n\nThank you for choosing ${data.settings.name}.`;
   openModal('WhatsApp Job / Order Message',`<div class="card"><textarea id="jobWaMessage" style="min-height:300px;white-space:pre-wrap">${esc(msg)}</textarea><button type="button" class="primary" style="margin-top:10px" onclick="sendWa('${p}','jobWaMessage')">Send WhatsApp</button></div>`)
 }
 function renderJobs(){jobTable.innerHTML=data.jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${data.jobs.map(j=>{const paid=jobPaymentTotal(j.id),bal=jobBalance(j);return `<tr><td>${esc(customerName(j.customer_id))}</td><td>${esc(j.service)}</td><td>${j.date||''}</td><td>${money(j.total)}</td><td class="paid-strong">${money(paid)}</td><td class="${bal>0?'due-strong':'paid-strong'}">${money(bal)}</td><td><span class="badge">${esc(j.status)}</span></td><td><button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button> <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No jobs.</div>'}
