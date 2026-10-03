@@ -531,6 +531,146 @@ button.receive{background:#10382b!important;border-color:#1d694f!important}
 }
 </style>
 
+
+<style id="prabhash-invoice-item-visibility-v9">
+/* V9: mobile invoice items must always remain visible and editable. */
+.rs-invoice-center{min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;padding-bottom:4px!important}
+.rs-invoice-main{overflow:visible!important;min-height:0!important;flex:0 0 auto!important}
+.rs-invoice-items{overflow:visible!important;min-height:0!important;flex:0 0 auto!important;height:auto!important}
+.rs-invoice-itemrows{display:flex!important;flex-direction:column!important;gap:8px!important;overflow:visible!important;max-height:none!important;min-height:0!important;height:auto!important;flex:none!important;padding:3px 0 2px!important}
+.rs-invoice-items .invoice-item-row{display:grid!important;grid-template-columns:minmax(0,1fr) 58px 100px 82px 32px!important;grid-template-areas:"item qty price total remove"!important;gap:6px!important;align-items:end!important;width:100%!important;box-sizing:border-box!important;padding:8px!important;margin:0!important;border:1px solid rgba(168,85,247,.16)!important;border-radius:10px!important;background:rgba(255,255,255,.018)!important}
+.rs-invoice-items .invoice-item-row .item-field{grid-area:item!important;min-width:0!important;width:auto!important}
+.rs-invoice-items .invoice-item-row .item-qty-cell{grid-area:qty!important;width:auto!important;min-width:0!important}
+.rs-invoice-items .invoice-item-row .item-price-cell{grid-area:price!important;width:auto!important;min-width:0!important}
+.rs-invoice-items .invoice-item-row .rs-item-line-total{grid-area:total!important;width:auto!important;min-width:0!important}
+.rs-invoice-items .invoice-item-row .rs-item-remove-btn{grid-area:remove!important;width:32px!important;min-width:32px!important;height:36px!important;padding:0!important;align-self:end!important}
+.rs-invoice-items .invoice-item-row label{display:block!important;font-size:9px!important;line-height:1.1!important;margin:0 0 3px!important;color:#8f84a0!important}
+.rs-invoice-items .invoice-item-row input{width:100%!important;box-sizing:border-box!important;height:36px!important;min-width:0!important}
+.rs-invoice-items .invoice-item-row .rs-item-input-wrap{display:grid!important;grid-template-columns:minmax(0,1fr) 32px!important;gap:5px!important;min-width:0!important}
+.rs-invoice-items .invoice-item-row .rs-item-save-btn{width:32px!important;min-width:32px!important;height:36px!important;padding:0!important}
+.rs-invoice-items .invoice-item-row .rs-item-line-total b{width:100%!important;height:36px!important;line-height:36px!important;box-sizing:border-box!important;display:block!important;padding:0 7px!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:8px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:11px!important}
+.item-main-label{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.item-main-label label{margin-bottom:0!important}
+.item-main-label .stock-info{font-size:8px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:620px){
+  .rs-invoice-workspace{display:block!important;overflow:visible!important}
+  .rs-invoice-tools{display:none!important}
+  .rs-invoice-center{overflow-y:auto!important;max-height:none!important}
+  .rs-invoice-summary{margin-top:8px!important;height:auto!important;max-height:none!important;position:static!important}
+  .rs-invoice-items .invoice-item-row{grid-template-columns:minmax(0,1fr) 52px 92px 78px 32px!important;gap:5px!important;padding:7px!important}
+}
+@media(max-width:430px){
+  .rs-invoice-items .invoice-item-row{grid-template-columns:minmax(0,1fr) 48px 84px 74px 30px!important;gap:4px!important}
+  .rs-invoice-items .invoice-item-row .rs-item-save-btn{width:30px!important;min-width:30px!important}
+  .rs-invoice-items .invoice-item-row .rs-item-remove-btn{width:30px!important;min-width:30px!important}
+  .rs-invoice-items .invoice-item-row input,.rs-invoice-items .invoice-item-row .rs-item-line-total b{height:34px!important;line-height:34px!important}
+  .item-main-label .stock-info{display:none!important}
+}
+@media(max-width:360px){
+  .rs-invoice-items .invoice-item-row{grid-template-columns:minmax(0,1fr) 46px 78px 68px 30px!important}
+}
+</style>
+
+<style id="prabhash-invoice-item-v10">
+/* V10 — clean invoice item flow */
+.rs-invoice-items .rs-quick-item-bar{grid-template-columns:minmax(0,1fr) 58px 92px 108px!important;align-items:end!important}
+.rs-quick-item-suggestions{position:relative;z-index:60}
+.rs-quick-item-suggest-box{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#111827;border:1px solid rgba(168,85,247,.45);border-radius:12px;box-shadow:0 18px 45px rgba(0,0,0,.55);padding:5px;max-height:220px;overflow:auto;display:none}
+.rs-quick-item-suggest-box.open{display:block}
+.rs-quick-suggest-btn{display:flex!important;width:100%!important;justify-content:space-between!important;gap:10px!important;text-align:left!important;background:transparent!important;border:0!important;border-radius:9px!important;padding:10px 11px!important;color:#f5f3ff!important;min-height:42px!important}
+.rs-quick-suggest-btn:hover,.rs-quick-suggest-btn:focus{background:rgba(168,85,247,.16)!important}
+.rs-quick-suggest-price{color:#d8b4fe!important;white-space:nowrap}
+.rs-new-item-popup{max-width:520px!important}
+.rs-new-item-popup .popup-kicker{font-size:11px;color:#a78bfa;margin-bottom:10px}
+.rs-new-item-popup .popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rs-new-item-popup .popup-grid .full{grid-column:1/-1}
+.rs-invoice-items .invoice-item-row{grid-template-columns:minmax(0,1fr) 58px 94px 86px 32px!important;grid-template-areas:"item qty price total remove"!important}
+.rs-invoice-items .invoice-item-row .item-price{background:rgba(255,255,255,.035)!important;color:#e9ddff!important}
+.rs-invoice-items .invoice-item-row .item-price[readonly]{cursor:default}
+@media(max-width:720px){
+  .rs-invoice-items .rs-quick-item-bar{grid-template-columns:minmax(0,1fr) 58px!important}
+  .rs-quick-item-bar .rs-quick-item-btn,.rs-quick-item-bar .rs-quick-new-item-btn{width:100%!important}
+  .rs-invoice-items .invoice-item-row{grid-template-columns:minmax(0,1fr) 54px 92px 86px 30px!important;grid-template-areas:"item item item item remove" "qty price total total remove"!important;row-gap:7px!important}
+  .rs-invoice-items .invoice-item-row .item-field{min-width:0!important}
+  .rs-invoice-items .invoice-item-row .rs-item-save-btn{display:none!important}
+}
+@media(max-width:430px){
+  .rs-new-item-popup .popup-grid{grid-template-columns:1fr}
+  .rs-new-item-popup .popup-grid .full{grid-column:auto}
+  .rs-invoice-items .rs-quick-item-bar{grid-template-columns:minmax(0,1fr) 54px!important}
+  .rs-invoice-items .invoice-item-row{grid-template-columns:54px 86px minmax(78px,1fr) 30px!important;grid-template-areas:"item item item remove" "qty price total remove"!important}
+}
+/* ===== FIX: Compact New/Edit Item popup + working save layout ===== */
+.modalbox.compact-modal{
+  width:min(560px,94vw)!important;
+  height:auto!important;
+  max-height:min(90vh,620px)!important;
+  overflow:auto!important;
+  padding:16px!important;
+}
+.modalbox.compact-modal #modalBody{
+  overflow:visible!important;
+  display:block!important;
+  flex:none!important;
+}
+.modalbox.compact-modal form{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  min-height:0!important;
+}
+.modalbox.compact-modal form>div{
+  min-width:0!important;
+}
+.modalbox.compact-modal form .full{
+  grid-column:1/-1!important;
+}
+.modalbox.compact-modal label{
+  margin-bottom:4px!important;
+  font-size:12px!important;
+}
+.modalbox.compact-modal input,
+.modalbox.compact-modal select{
+  min-height:40px!important;
+}
+.rs-new-item-popup{
+  width:100%;
+}
+.rs-new-item-popup .popup-kicker{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  opacity:.75;
+  margin-bottom:8px;
+}
+.rs-new-item-popup .popup-grid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+}
+.rs-new-item-popup .popup-grid .full{
+  grid-column:1/-1!important;
+}
+.rs-new-item-popup .hint{
+  font-size:11px!important;
+  line-height:1.35!important;
+}
+@media(max-width:560px){
+  .modalbox.compact-modal{
+    width:96vw!important;
+    padding:12px!important;
+  }
+  .modalbox.compact-modal form,
+  .rs-new-item-popup .popup-grid{
+    grid-template-columns:1fr!important;
+  }
+  .modalbox.compact-modal form .full,
+  .rs-new-item-popup .popup-grid .full{
+    grid-column:auto!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div id="login">
@@ -578,6 +718,29 @@ function catalogState(){
   if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
   if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[],customer_transactions:Array.isArray(v.customer_transactions)?v.customer_transactions:[],supplier_transactions:Array.isArray(v.supplier_transactions)?v.supplier_transactions:[],profit_settings:v.profit_settings&&typeof v.profit_settings==='object'?v.profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:Array.isArray(v.profit_withdrawals)?v.profit_withdrawals:[],employees:Array.isArray(v.employees)?v.employees:[],employee_advances:Array.isArray(v.employee_advances)?v.employee_advances:[],salary_records:Array.isArray(v.salary_records)?v.salary_records:[],job_payments:Array.isArray(v.job_payments)?v.job_payments:[]};
   let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
+}
+async function saveCatalog(st){
+  const safe = st && typeof st === 'object' ? st : catalogState();
+  try{
+    const payload = {
+      id: 1,
+      item_catalog: safe
+    };
+    const {error} = await sb.from('business_settings').upsert(payload,{onConflict:'id'});
+    if(error){
+      console.error('Catalog save failed:', error);
+      localStorage.setItem('prabhash_item_catalog', JSON.stringify(safe.items||[]));
+      return false;
+    }
+    data.settings = {...(data.settings||{}), item_catalog:safe};
+    localStorage.setItem('prabhash_item_catalog', JSON.stringify(safe.items||[]));
+    return true;
+  }catch(err){
+    console.error('Catalog save failed:', err);
+    localStorage.setItem('prabhash_item_catalog', JSON.stringify(safe.items||[]));
+    alert('Could not save item: '+(err?.message||err));
+    return false;
+  }
 }
 function customerTransactions(){return catalogState().customer_transactions||[]}
 function jobPayments(){return catalogState().job_payments||[]}
@@ -731,6 +894,40 @@ function openCustomerHistory(customerId){
 }
 
 function catalog(){return catalogState().items}
+function checkInvoiceStock(items, st, oldItems=[]){
+  const requested={};
+  const restored={};
+  (Array.isArray(oldItems)?oldItems:[]).forEach(x=>{
+    const key=String(x?.name||'').trim().toLowerCase();
+    if(key) restored[key]=(restored[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
+  });
+  (Array.isArray(items)?items:[]).forEach(x=>{
+    const key=String(x?.name||'').trim().toLowerCase();
+    if(key) requested[key]=(requested[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
+  });
+  for(const key of Object.keys(requested)){
+    const item=(st?.items||[]).find(x=>String(x?.name||'').trim().toLowerCase()===key);
+    if(!item) continue;
+    const available=Math.max(0,Math.round(Number(item.qty)||0))+(restored[key]||0);
+    if(requested[key]>available){
+      return `Not enough stock for "${item.name}". Available: ${available}, requested: ${requested[key]}.`;
+    }
+  }
+  return '';
+}
+function invoiceStockDelta(items, direction, st){
+  if(!st || !Array.isArray(st.items)) return;
+  const delta={};
+  (Array.isArray(items)?items:[]).forEach(x=>{
+    const key=String(x?.name||'').trim().toLowerCase();
+    if(key) delta[key]=(delta[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
+  });
+  st.items.forEach(item=>{
+    const key=String(item?.name||'').trim().toLowerCase();
+    if(delta[key]) item.qty=Math.max(0,Math.round(Number(item.qty)||0)+(Number(direction)||0)*delta[key]);
+  });
+}
+
 function suppliers(){return catalogState().suppliers}
 function stockOf(name){const x=catalog().find(i=>String(i.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());return Number(x?.qty)||0}
 function todayISO(){return new Date().toISOString().slice(0,10)}
@@ -844,7 +1041,18 @@ async function loadAll(){
   if(isAdmin) renderAdmin();
 }
 function customerName(id){return data.customers.find(x=>x.id===id)?.name||'Walk-in / No customer'}function customer(id){return data.customers.find(x=>x.id===id)||{name:'Walk-in / No customer',phone:'',email:'',address:'Kalahagala'}}
-function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('open')}function closeModal(){modal.classList.remove('open')}
+function openModal(t,b){
+  modalTitle.textContent=t;
+  modalBody.innerHTML=b;
+  const box=modal.querySelector('.modalbox');
+  if(box) box.classList.toggle('compact-modal', /^(New Item|Edit Item)$/.test(String(t||'')));
+  modal.classList.add('open');
+}
+function closeModal(){
+  modal.classList.remove('open');
+  const box=modal.querySelector('.modalbox');
+  if(box) box.classList.remove('compact-modal');
+}
 function contactImportControls(type){return `<div class="full" style="margin-top:4px"><div class="row" style="gap:8px;align-items:center"><button type="button" class="secondary" onclick="importPhoneContact('${type}')">📱 Import Phone Contact</button><label class="secondary" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="file" accept=".vcf,text/vcard" style="display:none" onchange="importVCard(event,'${type}')">📇 Choose .vcf</label></div><div class="hint" style="margin-top:5px">On supported phones, Import Phone Contact opens your saved contacts. If unavailable, use a .vcf contact file.</div></div>}`}
 function openCustomer(c=null){openModal(c?'Edit Customer':'New Customer',`<form id="customerForm" onsubmit="saveCustomer(event,'${c?.id||''}')"><div><label>Name</label><input name="name" required value="${esc(c?.name)}"></div>${isAdmin?`<div><label>Phone / WhatsApp</label><input name="phone" value="${esc(c?.phone)}"></div>`:''}<div><label>Email</label><input name="email" value="${esc(c?.email)}"></div><div><label>Address</label><input name="address" value="${esc(c?.address)}"></div>${isAdmin?contactImportControls('customer'):''}<div class="full"><button class="primary">Save</button></div></form>`)}
 async function saveCustomer(e,id){e.preventDefault();let o=Object.fromEntries(new FormData(e.target));if(!id){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey(o));if(existing){closeModal();toast('This customer already exists — existing account kept ✓');return;}}let q=id?sb.from('customers').update(o).eq('id',id):sb.from('customers').insert(o);let {error}=await q;if(error)return alert(error.message);closeModal();await loadAll();render()}
@@ -878,106 +1086,163 @@ function openJobPayment(jobId){const j=data.jobs.find(x=>String(x.id)===String(j
 async function saveJobPayment(e,jobId){e.preventDefault();const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const f=new FormData(e.target),amount=Math.max(0,Number(f.get('amount'))||0),due=Math.max(0,jobBalance(j));if(!amount)return alert('Enter payment amount.');if(amount>due)return alert(`Payment cannot exceed remaining balance of ${money(due)}.`);const rows=[...jobPayments(),{id:crypto.randomUUID(),job_id:j.id,customer_id:j.customer_id||null,amount,date:f.get('date')||todayISO(),method:f.get('method')||'Cash',notes:String(f.get('notes')||'').trim(),created_at:new Date().toISOString(),by:currentUser?.email||''}];if(!await saveJobPayments(rows))return;closeModal();await loadAll();render();toast('Job payment saved ✓')}
 function invoiceItemRow(it){
   const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===String(it.name||'').trim().toLowerCase());
-  const stockText=stock?`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}${Number(stock.cost||0)>0?` • Buy: ${money(stock.cost)}`:''}`:'Not a saved stock item';
+  const stockText=stock?`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}`:'Manual item';
   const lineTotal=Math.max(0,Number(it.qty)||1)*Math.max(0,Number(it.price)||0);
-  return `<div class="invoice-item-row row" data-cost="${Number(it.cost)||Number(stock?.cost)||0}" style="margin-bottom:6px;align-items:end">
-    <div class="item-field" style="flex:1;min-width:0">
-      <label>Item</label>
-      <div class="rs-item-input-wrap"><input class="item-name" value="${esc(it.name||'')}" placeholder="Type item name..." autocomplete="off" list="invoiceItemCatalogList" oninput="invoiceItemNameInput(this)" onfocus="invoiceItemNameInput(this)"><button type="button" class="rs-item-save-btn" title="Save / update this item" onclick="saveItemFromInvoice(this)">💾</button></div>
-      <div class="stock-info hint" style="margin-top:2px">${stockText}</div>
+  return `<div class="invoice-item-row" data-cost="${Number(it.cost)||Number(stock?.cost)||0}">
+    <div class="item-field">
+      <div class="item-main-label"><label>Item</label><span class="stock-info hint">${stockText}</span></div>
+      <input class="item-name" value="${esc(it.name||'')}" placeholder="Item name" autocomplete="off" oninput="invoiceItemNameInput(this)">
     </div>
-    <div style="width:70px"><label>Qty</label><input class="item-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(it.qty)||1))}" oninput="updateInvoiceTotals()"></div>
-    <div style="width:110px"><label>Unit Price</label><input class="item-price" type="number" min="0" step="0.01" value="${Number(it.price)||0}" oninput="updateInvoiceTotals()"></div>
+    <div class="item-qty-cell"><label>Qty</label><input class="item-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(it.qty)||1))}" oninput="updateInvoiceTotals()"></div>
+    <div class="item-price-cell"><label>Unit Price</label><input class="item-price" type="number" min="0" step="0.01" value="${Number(it.price)||0}" readonly aria-readonly="true"></div>
     <div class="rs-item-line-total"><label>Total</label><b>${money(lineTotal)}</b></div>
     <button type="button" class="danger rs-item-remove-btn" title="Remove item" onclick="removeInvoiceItem(this)">✕</button>
   </div>`;
 }
+function renderQuickItemSuggestions(){
+  const input=document.getElementById('quickInvoiceItem');
+  const box=document.getElementById('quickInvoiceSuggestions');
+  if(!input||!box)return;
+  const q=String(input.value||'').trim().toLowerCase();
+  if(!q){box.innerHTML='';box.classList.remove('open');return;}
+  const matches=catalog().filter(x=>String(x.name||'').toLowerCase().includes(q)).slice(0,12);
+  box.innerHTML=matches.map(x=>`<button type="button" class="rs-quick-suggest-btn" onclick="pickQuickInvoiceItem('${esc(String(x.name||'')).replace(/'/g,"&#39;")}')"><span>${esc(x.name)}</span><span class="rs-quick-suggest-price">${money(x.price)}</span></button>`).join('');
+  if(matches.length)box.classList.add('open');else box.classList.remove('open');
+}
 function quickInvoiceItemChanged(input){
   const q=String(input?.value||'').trim().toLowerCase();
-  const it=catalog().find(x=>String(x.name||'').trim().toLowerCase()===q);
-  if(it){ input.dataset.price=Number(it.price)||0; input.dataset.cost=Number(it.cost)||0; }
-  else { input.dataset.price=''; input.dataset.cost=''; }
+  const exact=catalog().find(x=>String(x.name||'').trim().toLowerCase()===q);
+  if(exact){input.dataset.price=Number(exact.price)||0;input.dataset.cost=Number(exact.cost)||0;}
+  else{input.dataset.price='';input.dataset.cost='';}
+  renderQuickItemSuggestions();
+}
+function pickQuickInvoiceItem(name){
+  const input=document.getElementById('quickInvoiceItem');
+  if(!input)return;
+  input.value=name;
+  const it=catalog().find(x=>String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());
+  input.dataset.price=Number(it?.price)||0;input.dataset.cost=Number(it?.cost)||0;
+  const box=document.getElementById('quickInvoiceSuggestions');if(box){box.innerHTML='';box.classList.remove('open');}
+  document.getElementById('quickInvoiceQty')?.focus();
 }
 function addQuickInvoiceItem(){
   const input=document.getElementById('quickInvoiceItem');
   const qtyEl=document.getElementById('quickInvoiceQty');
   const name=String(input?.value||'').trim();
-  if(!name){ input?.focus(); return alert('Type or select an item first.'); }
+  if(!name){input?.focus();return;}
   const match=catalog().find(x=>String(x.name||'').trim().toLowerCase()===name.toLowerCase());
+  if(!match){openNewInvoiceItemModal(name);return;}
   const qty=Math.max(1,Math.round(Number(qtyEl?.value)||1));
-  addInvoiceItem({name:match?.name||name,qty,price:match?Number(match.price)||0:0,cost:match?Number(match.cost)||0:0});
+  addInvoiceItem({name:match.name,qty,price:Number(match.price)||0,cost:Number(match.cost)||0});
   if(input){input.value='';input.dataset.price='';input.dataset.cost='';}
   if(qtyEl)qtyEl.value='1';
+  const box=document.getElementById('quickInvoiceSuggestions');if(box){box.innerHTML='';box.classList.remove('open');}
   input?.focus();
+}
+let pendingInvoiceItemDraft=null;
+function captureInvoiceDraft(){
+  const form=document.getElementById('invoiceForm');
+  if(!form)return null;
+  const invId=form.getAttribute('data-invoice-id')||'';
+  const original=invId?data.invoices.find(x=>x.id===invId):null;
+  return {
+    id:invId,
+    original,
+    invoice_no:form.querySelector('[name=invoice_no]')?.value||'',
+    invoice_date:form.querySelector('[name=invoice_date]')?.value||'',
+    due_date:form.querySelector('[name=due_date]')?.value||'',
+    payment_method:form.querySelector('[name=payment_method]')?.value||'Cash',
+    customer_id:form.querySelector('[name=customer_id]')?.value||'',
+    discount:Number(form.querySelector('[name=discount]')?.value)||0,
+    paid:Number(form.querySelector('[name=paid]')?.value)||0,
+    notes:form.querySelector('[name=notes]')?.value||'',
+    items:readInvoiceItems()
+  };
+}
+function restoreInvoiceDraft(draft,newItem){
+  if(!draft)return;
+  const form=document.getElementById('invoiceForm');
+  if(!form)return;
+  const set=(name,value)=>{const el=form.querySelector(`[name="${name}"]`);if(el)el.value=value??'';};
+  set('invoice_no',draft.invoice_no);
+  set('invoice_date',draft.invoice_date);
+  set('due_date',draft.due_date);
+  set('payment_method',draft.payment_method||'Cash');
+  set('customer_id',draft.customer_id||'');
+  set('discount',draft.discount||0);
+  set('paid',draft.paid||0);
+  set('notes',draft.notes||'');
+  const box=document.getElementById('invoiceItemRows');
+  if(box){
+    box.innerHTML='';
+    [...(draft.items||[]),newItem].forEach(it=>addInvoiceItem(it));
+  }
+  updateInvoiceTotals();
+  updateInvoicePreviousBalance(draft.customer_id||'');
+  setTimeout(()=>document.getElementById('quickInvoiceItem')?.focus(),40);
+}
+function openNewInvoiceItemModal(prefill=''){
+  if(!isAdmin)return alert('Administrator access required to add a saved item.');
+  pendingInvoiceItemDraft=captureInvoiceDraft();
+  openModal('New Item',`<div class="rs-new-item-popup">
+    <div class="popup-kicker">SAVE ITEM + ADD TO INVOICE</div>
+    <form onsubmit="saveNewInvoiceItemAndAdd(event)">
+      <div class="popup-grid">
+        <div class="full"><label>Item name</label><input name="name" required value="${esc(prefill)}" placeholder="e.g. Micro charger"></div>
+        <div><label>Unit price</label><input name="price" type="number" min="0" step="0.01" required placeholder="Selling price"></div>
+        <div><label>Stock quantity</label><input name="qty" type="number" min="0" step="1" value="0" placeholder="0"></div>
+        <div><label>Buy price <span class="hint">(optional)</span></label><input name="cost" type="number" min="0" step="0.01" value="0" placeholder="Cost per unit"></div>
+        <div class="full"><div class="hint">The item is saved to your catalogue and added to this invoice with quantity 1. You can change the invoice quantity afterwards.</div></div>
+        <div class="full"><button class="primary" type="submit">Save Item & Add</button></div>
+      </div>
+    </form>
+  </div>`);
+}
+async function saveNewInvoiceItemAndAdd(e){
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const name=String(f.get('name')||'').trim();
+  const price=Math.max(0,Number(f.get('price'))||0);
+  const qty=Math.max(0,Math.round(Number(f.get('qty'))||0));
+  const cost=Math.max(0,Number(f.get('cost'))||0);
+  if(!name)return alert('Enter item name.');
+  if(!price)return alert('Enter unit price.');
+  const st=catalogState();
+  const key=name.toLowerCase();
+  st.items=st.items.filter(x=>String(x.name||'').trim().toLowerCase()!==key);
+  st.items.push({name,cost,price,qty,supplier:''});
+  const ok=await saveCatalog(st);
+  if(!ok)return;
+  const newItem={name,qty:1,price,cost};
+  const draft=pendingInvoiceItemDraft;
+  pendingInvoiceItemDraft=null;
+  closeModal();
+  if(draft){
+    const base=draft.original?{...draft.original,items:draft.items}:null;
+    openInvoice(base);
+    restoreInvoiceDraft(draft,newItem);
+  }else{
+    addInvoiceItem(newItem);
+  }
+  const input=document.getElementById('quickInvoiceItem');if(input){input.value='';input.focus();}
 }
 function invoiceItemNameInput(input){
   const q=input.value.trim().toLowerCase();
-  if(!q)return;
+  const row=input.closest('.invoice-item-row');
+  if(!row)return;
   const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===q);
   if(stock){
-    const row=input.closest('.invoice-item-row');
-    if(row){
-      row.querySelector('.item-price').value=Number(stock.price)||0;
-      row.dataset.cost=Number(stock.cost)||0;
-      const info=row.querySelector('.stock-info');
-      if(info)info.innerHTML=`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}${Number(stock.cost||0)>0?` • Buy: ${money(stock.cost)}`:''}`;
-      updateInvoiceTotals();
-    }
+    row.querySelector('.item-price').value=Number(stock.price)||0;
+    row.dataset.cost=Number(stock.cost)||0;
+    const info=row.querySelector('.stock-info');if(info)info.textContent=`Stock: ${Number(stock.qty)||0}`;
+    updateInvoiceTotals();
   }
 }
-function pickInvoiceItem(btn,name,price,cost){
-  const row=btn.closest('.invoice-item-row'); if(!row)return;
-  row.querySelector('.item-name').value=name;
-  row.querySelector('.item-price').value=Number(price)||0;
-  row.dataset.cost=Number(cost)||0;
-  updateInvoiceTotals();
-}
-async function saveCatalog(nextState){
-  if(!isAdmin){alert('Administrator access required to change the shared item list.');return false}
-  const st=(nextState&&nextState.items)?nextState:catalogState();
-  st.items=st.items.filter(x=>x.name).map(x=>({name:String(x.name).trim(),cost:Math.max(0,Number(x.cost)||0),price:Math.max(0,Number(x.price)||0),qty:Math.max(0,Math.round(Number(x.qty)||0)),supplier:String(x.supplier||'').trim()}));
-  const seen=new Map();st.items.forEach(x=>seen.set(x.name.toLowerCase(),x));st.items=[...seen.values()];
-  st.customer_transactions=Array.isArray(st.customer_transactions)?st.customer_transactions:[];
-  st.supplier_transactions=Array.isArray(st.supplier_transactions)?st.supplier_transactions:[];
-  st.profit_settings=(st.profit_settings&&typeof st.profit_settings==='object')?{owner1:String(st.profit_settings.owner1||'Owner 1').trim()||'Owner 1',owner2:String(st.profit_settings.owner2||'Owner 2').trim()||'Owner 2'}:{owner1:'Owner 1',owner2:'Owner 2'};
-  st.profit_withdrawals=Array.isArray(st.profit_withdrawals)?st.profit_withdrawals:[];
-  st.job_payments=Array.isArray(st.job_payments)?st.job_payments:[];
-  st.suppliers=(st.suppliers||[]).filter(x=>x.name).map(x=>({id:x.id||crypto.randomUUID(),name:String(x.name).trim(),phone:String(x.phone||''),notes:String(x.notes||'')}));
-  const {data:updated,error}=await sb.from('business_settings').upsert({id:1,item_catalog:st},{onConflict:'id'}).select('item_catalog').maybeSingle();
-  if(error){console.error(error);alert('Could not save shared data.\n\n'+error.message);return false}
-  data.settings.item_catalog=updated?.item_catalog||st;localStorage.setItem('prabhash_item_catalog',JSON.stringify(st.items));toast('Saved ✓');return true
-}
-function changeStock(name,delta,state){const x=state.items.find(i=>String(i.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());if(x)x.qty=Math.max(0,(Number(x.qty)||0)+Number(delta||0))}
-function invoiceStockDelta(items,sign,state){for(const it of items||[]){const x=state.items.find(i=>String(i.name||'').trim().toLowerCase()===String(it.name||'').trim().toLowerCase());if(x)changeStock(it.name,sign*Math.max(0,Math.round(Number(it.qty)||0)),state)}}
-function checkInvoiceStock(items,state,editingOld){
-  const available={};state.items.forEach(x=>available[String(x.name).toLowerCase()]=Number(x.qty)||0);
-  for(const it of (editingOld||[])){const k=String(it.name||'').toLowerCase();if(k in available)available[k]+=Math.max(0,Math.round(Number(it.qty)||0));}
-  for(const it of items||[]){const k=String(it.name||'').toLowerCase();if(k in available && Math.max(0,Math.round(Number(it.qty)||0))>available[k])return `Not enough stock for "${it.name}". Available: ${available[k]}`;}
-  return '';
-}
+function pickInvoiceItem(btn,name,price,cost){const row=btn.closest('.invoice-item-row');if(!row)return;row.querySelector('.item-name').value=name;row.querySelector('.item-price').value=Number(price)||0;row.dataset.cost=Number(cost)||0;updateInvoiceTotals();}
 async function saveItemFromInvoice(btn){
   const row=btn.closest('.invoice-item-row');
-  const name=row.querySelector('.item-name').value.trim();
-  const price=Number(row.querySelector('.item-price').value)||0;
-  const qty=Math.max(1,Math.round(Number(row.querySelector('.item-qty').value)||1));
-  if(!name)return alert('Enter an item name first.');
-  const st=catalogState();
-  const existing=st.items.find(x=>String(x.name||'').trim().toLowerCase()===name.toLowerCase());
-  // When an item is created directly from an invoice, initialize its stock
-  // with the invoice quantity. The invoice save will deduct that same quantity,
-  // leaving stock at zero instead of blocking the invoice as "not enough stock".
-  const initialQty=existing ? Math.max(0,Math.round(Number(existing.qty)||0)) : qty;
-  st.items=[...st.items.filter(x=>String(x.name||'').trim().toLowerCase()!==name.toLowerCase()),{name,cost:Number(existing?.cost)||0,price,qty:initialQty,supplier:String(existing?.supplier||'')}];
-  const ok=await saveCatalog(st);
-  if(ok){
-    btn.textContent='Saved ✓';
-    setTimeout(()=>btn.textContent='Save Item',900);
-    // Refresh the row's stock info immediately.
-    const stock=st.items.find(x=>String(x.name||'').trim().toLowerCase()===name.toLowerCase());
-    const info=row.querySelector('.stock-info');
-    if(info)info.innerHTML=stock?`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}${Number(stock.cost||0)>0?` • Buy: ${money(stock.cost)} • Profit: ${money((Number(stock.price)||0)-(Number(stock.cost)||0))}/unit`:''}`:'Not a saved stock item';
-    row.dataset.cost=Number(stock?.cost)||0;
-  }
+  const name=row?.querySelector('.item-name')?.value?.trim()||'';
+  if(name)openNewInvoiceItemModal(name);
 }
 function openItemModal(item=null){
   if(!isAdmin)return alert('Administrator access required to add or edit saved items.');
@@ -1092,11 +1357,11 @@ function openInvoice(inv=null){
         <div class="rs-invoice-main">
           <div id="invoiceItems" class="card rs-invoice-items">
             <div class="space"><div><b>Items</b><div class="rs-invoice-tip">Search a saved item, set quantity, then add it in one click.</div></div></div>
-            <div class="rs-quick-item-bar">
-              <div class="rs-quick-item-name"><label>Quick item</label><input id="quickInvoiceItem" list="invoiceItemCatalogList" placeholder="Type item name..." autocomplete="off" oninput="quickInvoiceItemChanged(this)"><datalist id="invoiceItemCatalogList">${catalog().map(x=>`<option value="${esc(x.name)}">${esc(x.name)} — ${money(x.price)}</option>`).join('')}</datalist></div>
+            <div class="rs-quick-item-bar rs-quick-item-v10">
+              <div class="rs-quick-item-name rs-quick-item-suggestions"><label>Item</label><input id="quickInvoiceItem" placeholder="Type item name..." autocomplete="off" oninput="quickInvoiceItemChanged(this)" onfocus="renderQuickItemSuggestions()"><div id="quickInvoiceSuggestions" class="rs-quick-item-suggest-box" aria-live="polite"></div></div>
               <div class="rs-quick-item-qty"><label>Qty</label><input id="quickInvoiceQty" type="number" min="1" step="1" value="1"></div>
               <button type="button" class="primary rs-quick-item-btn" onclick="addQuickInvoiceItem()">＋ Add Item</button>
-              <button type="button" class="secondary rs-quick-blank-btn" onclick="addInvoiceItem()">Blank item</button>
+              <button type="button" class="secondary rs-quick-new-item-btn" onclick="openNewInvoiceItemModal(document.getElementById('quickInvoiceItem')?.value||'')">＋ New Item</button>
             </div>
             <div id="invoiceItemRows" class="rs-invoice-itemrows">${items.map(invoiceItemRow).join('')}</div>
           </div>
