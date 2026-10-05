@@ -600,6 +600,75 @@ button.receive{background:#10382b!important;border-color:#1d694f!important}
   .rs-invoice-items .rs-quick-item-bar{grid-template-columns:minmax(0,1fr) 54px!important}
   .rs-invoice-items .invoice-item-row{grid-template-columns:54px 86px minmax(78px,1fr) 30px!important;grid-template-areas:"item item item remove" "qty price total remove"!important}
 }
+/* ===== FIX: Compact New/Edit Item popup + working save layout ===== */
+.modalbox.compact-modal{
+  width:min(560px,94vw)!important;
+  height:auto!important;
+  max-height:min(90vh,620px)!important;
+  overflow:auto!important;
+  padding:16px!important;
+}
+.modalbox.compact-modal #modalBody{
+  overflow:visible!important;
+  display:block!important;
+  flex:none!important;
+}
+.modalbox.compact-modal form{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+  min-height:0!important;
+}
+.modalbox.compact-modal form>div{
+  min-width:0!important;
+}
+.modalbox.compact-modal form .full{
+  grid-column:1/-1!important;
+}
+.modalbox.compact-modal label{
+  margin-bottom:4px!important;
+  font-size:12px!important;
+}
+.modalbox.compact-modal input,
+.modalbox.compact-modal select{
+  min-height:40px!important;
+}
+.rs-new-item-popup{
+  width:100%;
+}
+.rs-new-item-popup .popup-kicker{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  opacity:.75;
+  margin-bottom:8px;
+}
+.rs-new-item-popup .popup-grid{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:10px!important;
+}
+.rs-new-item-popup .popup-grid .full{
+  grid-column:1/-1!important;
+}
+.rs-new-item-popup .hint{
+  font-size:11px!important;
+  line-height:1.35!important;
+}
+@media(max-width:560px){
+  .modalbox.compact-modal{
+    width:96vw!important;
+    padding:12px!important;
+  }
+  .modalbox.compact-modal form,
+  .rs-new-item-popup .popup-grid{
+    grid-template-columns:1fr!important;
+  }
+  .modalbox.compact-modal form .full,
+  .rs-new-item-popup .popup-grid .full{
+    grid-column:auto!important;
+  }
+}
 </style>
 
 </head>
@@ -649,6 +718,25 @@ function catalogState(){
   if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
   if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[],customer_transactions:Array.isArray(v.customer_transactions)?v.customer_transactions:[],supplier_transactions:Array.isArray(v.supplier_transactions)?v.supplier_transactions:[],profit_settings:v.profit_settings&&typeof v.profit_settings==='object'?v.profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:Array.isArray(v.profit_withdrawals)?v.profit_withdrawals:[],employees:Array.isArray(v.employees)?v.employees:[],employee_advances:Array.isArray(v.employee_advances)?v.employee_advances:[],salary_records:Array.isArray(v.salary_records)?v.salary_records:[],job_payments:Array.isArray(v.job_payments)?v.job_payments:[]};
   let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
+}
+async function saveCatalog(st){
+  const safe = st && typeof st === 'object' ? st : catalogState();
+  try{
+    const {error}=await sb.from('business_settings').upsert({id:1,item_catalog:safe},{onConflict:'id'});
+    if(error){
+      console.error('Shared data save failed:',error);
+      const detail=[error.code,error.message,error.details,error.hint].filter(Boolean).join(' | ');
+      alert('Cloud save failed.\n\n'+detail);
+      return false;
+    }
+    data.settings={...(data.settings||{}),item_catalog:safe};
+    localStorage.setItem('prabhash_item_catalog',JSON.stringify(safe.items||[]));
+    return true;
+  }catch(err){
+    console.error('Shared data save exception:',err);
+    alert('Cloud save failed.\n\n'+(err?.message||err));
+    return false;
+  }
 }
 function customerTransactions(){return catalogState().customer_transactions||[]}
 function jobPayments(){return catalogState().job_payments||[]}
@@ -802,6 +890,40 @@ function openCustomerHistory(customerId){
 }
 
 function catalog(){return catalogState().items}
+function checkInvoiceStock(items, st, oldItems=[]){
+  const requested={};
+  const restored={};
+  (Array.isArray(oldItems)?oldItems:[]).forEach(x=>{
+    const key=String(x?.name||'').trim().toLowerCase();
+    if(key) restored[key]=(restored[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
+  });
+  (Array.isArray(items)?items:[]).forEach(x=>{
+    const key=String(x?.name||'').trim().toLowerCase();
+    if(key) requested[key]=(requested[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
+  });
+  for(const key of Object.keys(requested)){
+    const item=(st?.items||[]).find(x=>String(x?.name||'').trim().toLowerCase()===key);
+    if(!item) continue;
+    const available=Math.max(0,Math.round(Number(item.qty)||0))+(restored[key]||0);
+    if(requested[key]>available){
+      return `Not enough stock for "${item.name}". Available: ${available}, requested: ${requested[key]}.`;
+    }
+  }
+  return '';
+}
+function invoiceStockDelta(items, direction, st){
+  if(!st || !Array.isArray(st.items)) return;
+  const delta={};
+  (Array.isArray(items)?items:[]).forEach(x=>{
+    const key=String(x?.name||'').trim().toLowerCase();
+    if(key) delta[key]=(delta[key]||0)+Math.max(0,Math.round(Number(x?.qty)||0));
+  });
+  st.items.forEach(item=>{
+    const key=String(item?.name||'').trim().toLowerCase();
+    if(delta[key]) item.qty=Math.max(0,Math.round(Number(item.qty)||0)+(Number(direction)||0)*delta[key]);
+  });
+}
+
 function suppliers(){return catalogState().suppliers}
 function stockOf(name){const x=catalog().find(i=>String(i.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());return Number(x?.qty)||0}
 function todayISO(){return new Date().toISOString().slice(0,10)}
@@ -915,10 +1037,21 @@ async function loadAll(){
   if(isAdmin) renderAdmin();
 }
 function customerName(id){return data.customers.find(x=>x.id===id)?.name||'Walk-in / No customer'}function customer(id){return data.customers.find(x=>x.id===id)||{name:'Walk-in / No customer',phone:'',email:'',address:'Kalahagala'}}
-function openModal(t,b){modalTitle.textContent=t;modalBody.innerHTML=b;modal.classList.add('open')}function closeModal(){modal.classList.remove('open')}
+function openModal(t,b){
+  modalTitle.textContent=t;
+  modalBody.innerHTML=b;
+  const box=modal.querySelector('.modalbox');
+  if(box) box.classList.toggle('compact-modal', /^(New Item|Edit Item)$/.test(String(t||'')));
+  modal.classList.add('open');
+}
+function closeModal(){
+  modal.classList.remove('open');
+  const box=modal.querySelector('.modalbox');
+  if(box) box.classList.remove('compact-modal');
+}
 function contactImportControls(type){return `<div class="full" style="margin-top:4px"><div class="row" style="gap:8px;align-items:center"><button type="button" class="secondary" onclick="importPhoneContact('${type}')">📱 Import Phone Contact</button><label class="secondary" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="file" accept=".vcf,text/vcard" style="display:none" onchange="importVCard(event,'${type}')">📇 Choose .vcf</label></div><div class="hint" style="margin-top:5px">On supported phones, Import Phone Contact opens your saved contacts. If unavailable, use a .vcf contact file.</div></div>}`}
 function openCustomer(c=null){openModal(c?'Edit Customer':'New Customer',`<form id="customerForm" onsubmit="saveCustomer(event,'${c?.id||''}')"><div><label>Name</label><input name="name" required value="${esc(c?.name)}"></div>${isAdmin?`<div><label>Phone / WhatsApp</label><input name="phone" value="${esc(c?.phone)}"></div>`:''}<div><label>Email</label><input name="email" value="${esc(c?.email)}"></div><div><label>Address</label><input name="address" value="${esc(c?.address)}"></div>${isAdmin?contactImportControls('customer'):''}<div class="full"><button class="primary">Save</button></div></form>`)}
-async function saveCustomer(e,id){e.preventDefault();let o=Object.fromEntries(new FormData(e.target));if(!id){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey(o));if(existing){closeModal();toast('This customer already exists — existing account kept ✓');return;}}let q=id?sb.from('customers').update(o).eq('id',id):sb.from('customers').insert(o);let {error}=await q;if(error)return alert(error.message);closeModal();await loadAll();render()}
+async function saveCustomer(e,id){e.preventDefault();let o=Object.fromEntries(new FormData(e.target));if(!id){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey(o));if(existing){closeModal();toast('This customer already exists — existing account kept ✓');return;}}let q=id?sb.from('customers').update(o).eq('id',id):sb.from('customers').insert(o);let {error}=await q;if(error)return alert([error.code,error.message,error.details,error.hint].filter(Boolean).join(' | '));closeModal();await loadAll();render();toast(id?'Customer updated ✓':'Customer saved ✓')}
 function toggleJobNewCustomer(){const box=document.getElementById('jobNewCustomerBox'),sel=document.querySelector('#jobForm select[name="customer_id"]');if(!box)return;const on=box.style.display==='none'||box.style.display==='';box.style.display=on?'block':'none';if(sel)sel.disabled=on;const hidden=document.getElementById('jobCustomerMode');if(hidden)hidden.value=on?'new':'existing';}
 function openJob(j=null){
   const opts=data.customers.map(c=>`<option value="${c.id}" ${j?.customer_id===c.id?'selected':''}>${esc(c.name)}${isAdmin&&c.phone?' — '+esc(c.phone):''}</option>`).join('');
@@ -940,10 +1073,10 @@ async function saveJob(e,id){
   e.preventDefault();const f=new FormData(e.target);let customerId=String(f.get('customer_id')||'');
   if(!id && f.get('customer_mode')==='new'){
     const name=String(f.get('new_customer_name')||'').trim(),phone=String(f.get('new_customer_phone')||'').trim();
-    if(name){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey({name,phone}));if(existing)customerId=existing.id;else{const q=await sb.from('customers').insert({name,phone,email:'',address:''}).select().maybeSingle();if(q.error)return alert(q.error.message);customerId=q.data?.id||'';}}
+    if(name){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey({name,phone}));if(existing)customerId=existing.id;else{const newCustomerId=crypto.randomUUID();const q=await sb.from('customers').insert({id:newCustomerId,name,phone,email:'',address:''});if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));customerId=newCustomerId;}}
   }
   let o={customer_id:customerId||null,service:f.get('service'),date:f.get('date')||todayISO(),total:Math.max(0,Number(f.get('total'))||0),cost:Math.max(0,Number(f.get('cost'))||0),status:f.get('status')||'Booked',notes:f.get('notes')||''};
-  let q=id?await sb.from('jobs').update(o).eq('id',id):await sb.from('jobs').insert(o);if(q.error)return alert(q.error.message);closeModal();await loadAll();render();toast(id?'Job updated ✓':'Job started ✓')
+  let q=id?await sb.from('jobs').update(o).eq('id',id):await sb.from('jobs').insert(o);if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));closeModal();await loadAll();render();toast(id?'Job updated ✓':'Job started ✓')
 }
 function openJobPayment(jobId){const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const due=jobBalance(j);openModal(`Collect Payment — ${esc(j.service||'Job')}`,`<div class="card" style="margin-bottom:10px"><div class="grid"><div><div class="muted">Job Total</div><div class="kpi">${money(j.total)}</div></div><div><div class="muted">Already Paid</div><div class="kpi paid-strong">${money(jobPaymentTotal(j.id))}</div></div><div><div class="muted">Remaining</div><div class="kpi due-strong">${money(due)}</div></div></div></div><form onsubmit="saveJobPayment(event,'${j.id}')"><div><label>Payment / Advance Amount</label><input name="amount" type="number" min="0.01" max="${Math.max(due,0)}" step="0.01" required></div><div><label>Date</label><input name="date" type="date" value="${todayISO()}" required></div><div><label>Payment Method</label><select name="method"><option>Cash</option><option>Bank</option><option>Card</option><option>WhatsApp / Online</option><option>Other</option></select></div><div class="full"><label>Note</label><textarea name="notes" placeholder="Advance / balance payment"></textarea></div><div class="full"><button class="primary">Save Payment</button></div></form>`)}
 async function saveJobPayment(e,jobId){e.preventDefault();const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const f=new FormData(e.target),amount=Math.max(0,Number(f.get('amount'))||0),due=Math.max(0,jobBalance(j));if(!amount)return alert('Enter payment amount.');if(amount>due)return alert(`Payment cannot exceed remaining balance of ${money(due)}.`);const rows=[...jobPayments(),{id:crypto.randomUUID(),job_id:j.id,customer_id:j.customer_id||null,amount,date:f.get('date')||todayISO(),method:f.get('method')||'Cash',notes:String(f.get('notes')||'').trim(),created_at:new Date().toISOString(),by:currentUser?.email||''}];if(!await saveJobPayments(rows))return;closeModal();await loadAll();render();toast('Job payment saved ✓')}
@@ -1002,8 +1135,51 @@ function addQuickInvoiceItem(){
   const box=document.getElementById('quickInvoiceSuggestions');if(box){box.innerHTML='';box.classList.remove('open');}
   input?.focus();
 }
+let pendingInvoiceItemDraft=null;
+function captureInvoiceDraft(){
+  const form=document.getElementById('invoiceForm');
+  if(!form)return null;
+  const invId=form.getAttribute('data-invoice-id')||'';
+  const original=invId?data.invoices.find(x=>x.id===invId):null;
+  return {
+    id:invId,
+    original,
+    invoice_no:form.querySelector('[name=invoice_no]')?.value||'',
+    invoice_date:form.querySelector('[name=invoice_date]')?.value||'',
+    due_date:form.querySelector('[name=due_date]')?.value||'',
+    payment_method:form.querySelector('[name=payment_method]')?.value||'Cash',
+    customer_id:form.querySelector('[name=customer_id]')?.value||'',
+    discount:Number(form.querySelector('[name=discount]')?.value)||0,
+    paid:Number(form.querySelector('[name=paid]')?.value)||0,
+    notes:form.querySelector('[name=notes]')?.value||'',
+    items:readInvoiceItems()
+  };
+}
+function restoreInvoiceDraft(draft,newItem){
+  if(!draft)return;
+  const form=document.getElementById('invoiceForm');
+  if(!form)return;
+  const set=(name,value)=>{const el=form.querySelector(`[name="${name}"]`);if(el)el.value=value??'';};
+  set('invoice_no',draft.invoice_no);
+  set('invoice_date',draft.invoice_date);
+  set('due_date',draft.due_date);
+  set('payment_method',draft.payment_method||'Cash');
+  set('customer_id',draft.customer_id||'');
+  set('discount',draft.discount||0);
+  set('paid',draft.paid||0);
+  set('notes',draft.notes||'');
+  const box=document.getElementById('invoiceItemRows');
+  if(box){
+    box.innerHTML='';
+    [...(draft.items||[]),newItem].forEach(it=>addInvoiceItem(it));
+  }
+  updateInvoiceTotals();
+  updateInvoicePreviousBalance(draft.customer_id||'');
+  setTimeout(()=>document.getElementById('quickInvoiceItem')?.focus(),40);
+}
 function openNewInvoiceItemModal(prefill=''){
   if(!isAdmin)return alert('Administrator access required to add a saved item.');
+  pendingInvoiceItemDraft=captureInvoiceDraft();
   openModal('New Item',`<div class="rs-new-item-popup">
     <div class="popup-kicker">SAVE ITEM + ADD TO INVOICE</div>
     <form onsubmit="saveNewInvoiceItemAndAdd(event)">
@@ -1033,8 +1209,17 @@ async function saveNewInvoiceItemAndAdd(e){
   st.items.push({name,cost,price,qty,supplier:''});
   const ok=await saveCatalog(st);
   if(!ok)return;
+  const newItem={name,qty:1,price,cost};
+  const draft=pendingInvoiceItemDraft;
+  pendingInvoiceItemDraft=null;
   closeModal();
-  addInvoiceItem({name,qty:1,price,cost});
+  if(draft){
+    const base=draft.original?{...draft.original,items:draft.items}:null;
+    openInvoice(base);
+    restoreInvoiceDraft(draft,newItem);
+  }else{
+    addInvoiceItem(newItem);
+  }
   const input=document.getElementById('quickInvoiceItem');if(input){input.value='';input.focus();}
 }
 function invoiceItemNameInput(input){
@@ -1240,9 +1425,10 @@ async function saveInvoice(e,id){
   let notes=cleanInvoiceNotes(f.get('notes')||'');
   notes=`[[invoice_date:${f.get('invoice_date')||todayISO()}]][[PAYMENTS:${JSON.stringify(payments)}]][[CREDIT_APPLIED:${creditApplied.toFixed(2)}]]${notes?' '+notes:''}`;
   const o={invoice_no:f.get('invoice_no')||nextInvoiceNo(),customer_id:f.get('customer_id')||null,due_date:f.get('due_date')||null,payment_method:f.get('payment_method')||old?.payment_method||'Cash',items,discount,paid,notes,total,balance,status:balance<0?'Overpaid':balance===0?'Paid':paid>0?'Partial':'Unpaid'};
-  const result=id?await sb.from('invoices').update(o).eq('id',id):await sb.from('invoices').insert(o); if(result.error)return alert(result.error.message);
-  if(old)invoiceStockDelta(old.items||[],1,st); invoiceStockDelta(items,-1,st); await saveCatalog(st);
-  closeModal();await loadAll();render();toast(balance<0?'Invoice saved — change due ✓':'Invoice saved ✓');
+  const result=id?await sb.from('invoices').update(o).eq('id',id):await sb.from('invoices').insert(o); if(result.error)return alert([result.error.code,result.error.message,result.error.details,result.error.hint].filter(Boolean).join(' | '));
+  if(old)invoiceStockDelta(old.items||[],1,st); invoiceStockDelta(items,-1,st);
+  const stockSaved=await saveCatalog(st);
+  closeModal();await loadAll();render();toast(stockSaved?(balance<0?'Invoice saved — change due ✓':'Invoice saved ✓'):'Invoice saved ✓ — stock sync failed');
 }
 function purchaseRowsHtml(rows){return rows.map((x)=>`<div class="purchase-row row" style="margin-bottom:8px;align-items:end"><div style="flex:2"><label>Item</label><select class="purchase-item" onchange="purchaseItemChanged(this)"><option value="">Select item</option>${catalog().map(i=>`<option value="${esc(i.name)}" ${i.name===x.name?'selected':''}>${esc(i.name)} (Stock: ${Number(i.qty)||0})</option>`).join('')}</select></div><div style="width:90px"><label>Qty</label><input class="purchase-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(x.qty)||1))}"></div><div style="width:130px"><label>Unit cost</label><input class="purchase-cost" type="number" min="0" step="0.01" value="${Number(x.cost)||0}"></div><button type="button" class="danger" onclick="this.closest('.purchase-row').remove()">Remove</button></div>`).join('')}
 function openExpense(x=null){const pi=purchaseInfo(x), rows=pi?.items||[{name:'',qty:1,cost:0}], sup=pi?.supplier||'';openModal(x?'Edit Expense':'New Expense',`<form onsubmit="saveExpense(event,'${x?.id||''}')"><div><label>Date</label><input type="date" name="date" value="${x?.date||todayISO()}" required></div><div><label>Category</label><select name="category" id="expenseCategory" onchange="togglePurchaseFields()"><option ${x?.category==='Purchase'?'selected':''}>Purchase</option><option ${x?.category==='Equipment'?'selected':''}>Equipment</option><option ${x?.category==='Printing'?'selected':''}>Printing</option><option ${x?.category==='Travel'?'selected':''}>Travel</option><option ${x?.category==='Staff'?'selected':''}>Staff</option><option ${x?.category==='Other'?'selected':''}>Other</option></select></div><div id="purchaseFields" class="full"><div><label>Supplier</label><select id="purchaseSupplier"><option value="">Select supplier</option>${suppliers().map(z=>`<option value="${esc(z.name)}" ${z.name===sup?'selected':''}>${esc(z.name)}</option>`).join('')}</select></div><div style="margin-top:12px"><div class="space"><label>Purchased Items</label><button type="button" class="secondary" onclick="addPurchaseRow()">+ Add Item</button></div><div id="purchaseRows">${purchaseRowsHtml(rows)}</div></div></div><div class="full"><label>Description</label><input id="expenseDescription" name="description" value="${esc(pi?.label||(!pi?x?.description:''))}"></div><div><label>Amount</label><input id="expenseAmount" type="number" step="0.01" min="0" name="amount" value="${x?.amount||0}" required></div><div class="full"><button class="primary">Save Expense</button></div></form>`);togglePurchaseFields();}
@@ -1283,7 +1469,7 @@ function jobWhatsApp(id){
   const j=data.jobs.find(x=>x.id===id),c=customer(j?.customer_id);if(!j||!c)return;
   let p=String(c.phone||'').replace(/\D/g,'');if(p.startsWith('0'))p='94'+p.slice(1);if(!p)return alert('Customer phone number missing');
   const total=Number(j.total||0),paid=jobPaymentTotal(j.id),balance=jobBalance(j);
-  const msg=`${data.settings.name}\n\nJob / Order: ${j.service||'-'}\nCustomer: ${c.name}\n\nDate: ${j.date||'-'}\nStatus: ${j.status||'-'}\n\nTotal Amount: ${money(total)}\nAdvance / Paid: ${money(paid)}\nRemaining Balance: ${money(balance)}${j.notes?`\n\nNotes:\n${j.notes}`:''}\n\nThank you for choosing ${data.settings.name}.`;
+  const msg=`${data.settings.name}\n\nJob / Order: ${j.service||'-'}\nCustomer: ${c.name}\n\nDate: ${j.date||'-'}\nStatus: ${j.status||'-'}\n\nTotal Amount: ${money(total)}${('paid' in j)?`\nAdvance Paid: ${money(paid)}\nBalance Due: ${money(balance)}`:''}${j.notes?`\n\nNotes:\n${j.notes}`:''}\n\nThank you for choosing ${data.settings.name}.`;
   openModal('WhatsApp Job / Order Message',`<div class="card"><textarea id="jobWaMessage" style="min-height:300px;white-space:pre-wrap">${esc(msg)}</textarea><button type="button" class="primary" style="margin-top:10px" onclick="sendWa('${p}','jobWaMessage')">Send WhatsApp</button></div>`)
 }
 function renderJobs(){jobTable.innerHTML=data.jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${data.jobs.map(j=>{const paid=jobPaymentTotal(j.id),bal=jobBalance(j);return `<tr><td>${esc(customerName(j.customer_id))}</td><td>${esc(j.service)}</td><td>${j.date||''}</td><td>${money(j.total)}</td><td class="paid-strong">${money(paid)}</td><td class="${bal>0?'due-strong':'paid-strong'}">${money(bal)}</td><td><span class="badge">${esc(j.status)}</span></td><td><button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button> <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No jobs.</div>'}
