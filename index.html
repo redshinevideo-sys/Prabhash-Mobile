@@ -1082,17 +1082,18 @@ function openJobPayment(jobId){const j=data.jobs.find(x=>String(x.id)===String(j
 async function saveJobPayment(e,jobId){e.preventDefault();const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const f=new FormData(e.target),amount=Math.max(0,Number(f.get('amount'))||0),due=Math.max(0,jobBalance(j));if(!amount)return alert('Enter payment amount.');if(amount>due)return alert(`Payment cannot exceed remaining balance of ${money(due)}.`);const rows=[...jobPayments(),{id:crypto.randomUUID(),job_id:j.id,customer_id:j.customer_id||null,amount,date:f.get('date')||todayISO(),method:f.get('method')||'Cash',notes:String(f.get('notes')||'').trim(),created_at:new Date().toISOString(),by:currentUser?.email||''}];if(!await saveJobPayments(rows))return;closeModal();await loadAll();render();toast('Job payment saved ✓')}
 function invoiceItemRow(it){
   const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===String(it.name||'').trim().toLowerCase());
-  const stockText=stock?`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}`:'Manual item';
-  const lineTotal=Math.max(0,Number(it.qty)||1)*Math.max(0,Number(it.price)||0);
-  return `<div class="invoice-item-row" data-cost="${Number(it.cost)||Number(stock?.cost)||0}">
-    <div class="item-field">
-      <div class="item-main-label"><label>Item</label><span class="stock-info hint">${stockText}</span></div>
-      <input class="item-name" value="${esc(it.name||'')}" placeholder="Item name" autocomplete="off" oninput="invoiceItemNameInput(this)">
+  const stockText=stock?`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}${Number(stock.cost||0)>0?` • Buy: ${money(stock.cost)} • Profit: ${money((Number(stock.price)||0)-(Number(stock.cost)||0))}/unit`:''}`:'Not a saved stock item';
+  return `<div class="invoice-item-row row" data-cost="${Number(it.cost)||Number(stock?.cost)||0}" style="margin-bottom:8px;align-items:end">
+    <div class="item-field" style="flex:2;min-width:180px">
+      <label>Item</label>
+      <input class="item-name" value="${esc(it.name||'')}" placeholder="Type item name..." autocomplete="off" oninput="invoiceItemNameInput(this)" onfocus="invoiceItemNameInput(this)">
+      <div class="suggestions"></div>
+      <div class="stock-info hint" style="margin-top:4px">${stockText}</div>
     </div>
-    <div class="item-qty-cell"><label>Qty</label><input class="item-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(it.qty)||1))}" oninput="updateInvoiceTotals()"></div>
-    <div class="item-price-cell"><label>Unit Price</label><input class="item-price" type="number" min="0" step="0.01" value="${Number(it.price)||0}" readonly aria-readonly="true"></div>
-    <div class="rs-item-line-total"><label>Total</label><b>${money(lineTotal)}</b></div>
-    <button type="button" class="danger rs-item-remove-btn" title="Remove item" onclick="removeInvoiceItem(this)">✕</button>
+    <div style="width:95px"><label>Qty</label><input class="item-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(it.qty)||1))}" oninput="updateInvoiceTotals()"></div>
+    <div style="width:140px"><label>Unit Price</label><input class="item-price" type="number" min="0" step="0.01" value="${Number(it.price)||0}" oninput="updateInvoiceTotals()"></div>
+    <button type="button" class="secondary" onclick="saveItemFromInvoice(this)">Save Item</button>
+    <button type="button" class="danger" onclick="removeInvoiceItem(this)">Remove</button>
   </div>`;
 }
 function renderQuickItemSuggestions(){
@@ -1352,12 +1353,9 @@ function openInvoice(inv=null){
         </div>
         <div class="rs-invoice-main">
           <div id="invoiceItems" class="card rs-invoice-items">
-            <div class="space"><div><b>Items</b><div class="rs-invoice-tip">Search a saved item, set quantity, then add it in one click.</div></div></div>
-            <div class="rs-quick-item-bar rs-quick-item-v10">
-              <div class="rs-quick-item-name rs-quick-item-suggestions"><label>Item</label><input id="quickInvoiceItem" placeholder="Type item name..." autocomplete="off" oninput="quickInvoiceItemChanged(this)" onfocus="renderQuickItemSuggestions()"><div id="quickInvoiceSuggestions" class="rs-quick-item-suggest-box" aria-live="polite"></div></div>
-              <div class="rs-quick-item-qty"><label>Qty</label><input id="quickInvoiceQty" type="number" min="1" step="1" value="1"></div>
-              <button type="button" class="primary rs-quick-item-btn" onclick="addQuickInvoiceItem()">＋ Add Item</button>
-              <button type="button" class="secondary rs-quick-new-item-btn" onclick="openNewInvoiceItemModal(document.getElementById('quickInvoiceItem')?.value||'')">＋ New Item</button>
+            <div class="space rs-prabhash-invoice-actions">
+              <div><b>Items</b><div class="rs-invoice-tip">Type a few letters to pick a saved item, then set the price you want for this invoice.</div></div>
+              <div class="row" style="gap:6px"><button type="button" class="secondary" onclick="addInvoiceItem()">+ Add Item</button><button type="button" class="primary" onclick="openNewInvoiceItemModal()">＋ New Item</button></div>
             </div>
             <div id="invoiceItemRows" class="rs-invoice-itemrows">${items.map(invoiceItemRow).join('')}</div>
           </div>
@@ -1464,7 +1462,7 @@ function customerWhatsApp(id){
   const msg=`${data.settings.name}\n\nDear ${c.name},\n\nCustomer Account Summary / ගිණුම් විස්තර\n\nCurrent Balance: ${money(Math.abs(bal))}\nStatus: ${status}\n\n${bal>0?'Please settle the outstanding balance. / කරුණාකර ඉතිරි මුදල ගෙවන්න.':bal<0?'Customer credit / advance available. / ඔබගේ අත්තිකාරම් මුදල ගිණුමේ ඇත.':'Your account is settled. / ඔබගේ ගිණුම සම්පූර්ණයෙන් පියවා ඇත.'}\n\nThank you for choosing ${data.settings.name}.`;
   openModal('WhatsApp Customer Message',`<div class=\"card\"><textarea id=\"customerWaMessage\" style=\"min-height:300px;white-space:pre-wrap\">${esc(msg)}</textarea><button type=\"button\" class=\"primary\" style=\"margin-top:10px\" onclick=\"sendWa('${p}','customerWaMessage')\">Send WhatsApp</button></div>`);
 }
-function renderCustomers(){let q=(customerSearch.value||'').toLowerCase();let r=data.customers.filter(c=>(c.name+' '+(isAdmin?(c.phone||'')+' ':'')+(c.email||'')).toLowerCase().includes(q));customerTable.innerHTML=r.length?`<table><tr><th>Name</th>${isAdmin?'<th>Phone</th>':''}<th>Balance</th><th>Email</th><th>Actions</th></tr>${r.map(c=>{const bal=customerOutstanding(c.id);return `<tr><td>${esc(c.name)}</td>${isAdmin?`<td>${esc(c.phone||'')}</td>`:''}<td class="${bal>0?'due-strong':bal<0?'overpaid-strong':'paid-strong'}">${bal>0?'Due: ':bal<0?'Credit: ':''}${money(Math.abs(bal))}</td><td>${esc(c.email||'')}</td><td><button class="receive" onclick="openCustomerTransaction('${c.id}','receive')">Receive Money</button> <button class="danger" onclick="openCustomerTransaction('${c.id}','give')">Give Money</button> <button class="secondary" onclick="openCustomerHistory('${c.id}')">History</button> <button class="secondary" onclick="customerWhatsApp('${c.id}')">WhatsApp</button> <button class="secondary" onclick="openCustomer(data.customers.find(x=>x.id==='${c.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteRecord('customers','${c.id}','customer')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No customers.</div>'}
+function renderCustomers(){let q=(customerSearch.value||'').toLowerCase();let r=data.customers.filter(c=>(c.name+' '+(isAdmin?(c.phone||'')+' ':'')+(c.email||'')).toLowerCase().includes(q));customerTable.innerHTML=r.length?`<table><tr><th>Name</th>${isAdmin?'<th>Phone</th>':''}<th>Balance</th><th>Email</th><th>Actions</th></tr>${r.map(c=>{const bal=customerOutstanding(c.id);return `<tr><td class="pm-c-name">${esc(c.name)}</td>${isAdmin?`<td class="pm-c-phone">${esc(c.phone||'')}</td>`:''}<td class="pm-c-balance ${bal>0?'due-strong':bal<0?'overpaid-strong':'paid-strong'}">${bal>0?'Due: ':bal<0?'Credit: ':''}${money(Math.abs(bal))}</td><td class="pm-c-email">${esc(c.email||'')}</td><td class="pm-actions"><button class="receive" onclick="openCustomerTransaction('${c.id}','receive')">Receive Money</button> <button class="danger" onclick="openCustomerTransaction('${c.id}','give')">Give Money</button> <button class="secondary" onclick="openCustomerHistory('${c.id}')">History</button> <button class="secondary" onclick="customerWhatsApp('${c.id}')">WhatsApp</button> <button class="secondary" onclick="openCustomer(data.customers.find(x=>x.id==='${c.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteRecord('customers','${c.id}','customer')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No customers.</div>'}
 function jobWhatsApp(id){
   const j=data.jobs.find(x=>x.id===id),c=customer(j?.customer_id);if(!j||!c)return;
   let p=String(c.phone||'').replace(/\D/g,'');if(p.startsWith('0'))p='94'+p.slice(1);if(!p)return alert('Customer phone number missing');
@@ -1472,8 +1470,8 @@ function jobWhatsApp(id){
   const msg=`${data.settings.name}\n\nJob / Order: ${j.service||'-'}\nCustomer: ${c.name}\n\nDate: ${j.date||'-'}\nStatus: ${j.status||'-'}\n\nTotal Amount: ${money(total)}\nAdvance / Paid: ${money(paid)}\nTotal Due: ${money(balance)}${j.notes?`\n\nNotes:\n${j.notes}`:''}\n\nThank you for choosing ${data.settings.name}.`;
   openModal('WhatsApp Job / Order Message',`<div class="card"><textarea id="jobWaMessage" style="min-height:300px;white-space:pre-wrap">${esc(msg)}</textarea><button type="button" class="primary" style="margin-top:10px" onclick="sendWa('${p}','jobWaMessage')">Send WhatsApp</button></div>`)
 }
-function renderJobs(){jobTable.innerHTML=data.jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${data.jobs.map(j=>{const paid=jobPaymentTotal(j.id),bal=jobBalance(j);return `<tr><td>${esc(customerName(j.customer_id))}</td><td>${esc(j.service)}</td><td>${j.date||''}</td><td>${money(j.total)}</td><td class="paid-strong">${money(paid)}</td><td class="${bal>0?'due-strong':'paid-strong'}">${money(bal)}</td><td><span class="badge">${esc(j.status)}</span></td><td><button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button> <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No jobs.</div>'}
-function renderInvoices(){invoiceTable.innerHTML=data.invoices.length?`<table><tr><th>No</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Balance/Change</th><th>Status</th><th>Payment History</th><th>Actions</th></tr>${data.invoices.map(i=>{const paid=paymentTotal(i),bal=invoiceBalance(i),over=bal<0,due=bal>0;return `<tr class="${over?'invoice-overpaid-row':due?'invoice-due-row':''}"><td>${i.invoice_no||i.id.slice(0,8)}</td><td>${invoiceDate(i)}</td><td>${esc(customerName(i.customer_id))}</td><td>${money(i.total)}</td><td class="${paid>0?'paid-strong':''}">${money(paid)}</td><td class="${over?'overpaid-strong':due?'due-strong':'paid-strong'}">${money(Math.abs(bal))}</td><td><span class="badge ${over?'overpaidbadge':due?'dangerbadge':'paid'}">${over?'OVERPAID':due?'BALANCE DUE':'PAID'}</span></td><td>${paymentHistoryHtml(i)}</td><td><button class="secondary" onclick="openInvoice(data.invoices.find(x=>x.id==='${i.id}'))">Edit / Payment</button> <button class="secondary" onclick="printInvoice('${i.id}')">PDF</button> <button class="secondary" onclick="waReminder('${i.id}')">WhatsApp</button>${isAdmin?` <button class="danger" onclick="deleteRecord('invoices','${i.id}','invoice')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No invoices.</div>'}
+function renderJobs(){jobTable.innerHTML=data.jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${data.jobs.map(j=>{const paid=jobPaymentTotal(j.id),bal=jobBalance(j);return `<tr><td class="pm-j-customer">${esc(customerName(j.customer_id))}</td><td class="pm-j-service">${esc(j.service)}</td><td class="pm-j-date">${j.date||''}</td><td class="pm-j-total">${money(j.total)}</td><td class="pm-j-paid paid-strong">${money(paid)}</td><td class="pm-j-balance ${bal>0?'due-strong':'paid-strong'}">${money(bal)}</td><td class="pm-j-status"><span class="badge">${esc(j.status)}</span></td><td class="pm-actions"><button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button> <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No jobs.</div>'}
+function renderInvoices(){invoiceTable.innerHTML=data.invoices.length?`<table><tr><th>No</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Balance/Change</th><th>Status</th><th>Payment History</th><th>Actions</th></tr>${data.invoices.map(i=>{const paid=paymentTotal(i),bal=invoiceBalance(i),over=bal<0,due=bal>0;return `<tr class="${over?'invoice-overpaid-row':due?'invoice-due-row':''}"><td class="pm-i-no">${i.invoice_no||i.id.slice(0,8)}</td><td class="pm-i-date">${invoiceDate(i)}</td><td class="pm-i-customer">${esc(customerName(i.customer_id))}</td><td class="pm-i-total">${money(i.total)}</td><td class="pm-i-paid ${paid>0?'paid-strong':''}">${money(paid)}</td><td class="pm-i-balance ${over?'overpaid-strong':due?'due-strong':'paid-strong'}">${money(Math.abs(bal))}</td><td class="pm-i-status"><span class="badge ${over?'overpaidbadge':due?'dangerbadge':'paid'}">${over?'OVERPAID':due?'BALANCE DUE':'PAID'}</span></td><td class="pm-i-history">${paymentHistoryHtml(i)}</td><td class="pm-actions"><button class="secondary" onclick="openInvoice(data.invoices.find(x=>x.id==='${i.id}'))">Edit / Payment</button> <button class="secondary" onclick="printInvoice('${i.id}')">PDF</button> <button class="secondary" onclick="waReminder('${i.id}')">WhatsApp</button>${isAdmin?` <button class="danger" onclick="deleteRecord('invoices','${i.id}','invoice')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No invoices.</div>'}
 function renderExpenses(){expenseTable.innerHTML=data.expenses.length?`<table><tr><th>Date</th><th>Category</th><th>Description</th><th>Supplier</th><th>Amount</th><th>Actions</th></tr>${data.expenses.map(x=>{const p=purchaseInfo(x);return `<tr><td>${x.date}</td><td>${esc(x.category)}</td><td>${esc(p?.label||x.description)}</td><td>${esc(p?.supplier||'-')}</td><td>${money(x.amount)}</td><td><button class="secondary" onclick="openExpense(data.expenses.find(v=>v.id==='${x.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteExpense('${x.id}')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No expenses.</div>'}
 function supplierTransactions(){return catalogState().supplier_transactions||[]}
 function supplierPurchases(supplierId){
@@ -1736,6 +1734,123 @@ async function clearAllBusinessData(){
 }
 function exportBackup(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='studio-redshine-cloud-backup.json';a.click()}
 boot();
+</script>
+
+<style id="prabhash-redshine-mobile-v12">
+/* ===== Prabhash V12 — Redshine-style phone UI ===== */
+@media (max-width:768px){
+  body{padding-bottom:82px!important;overflow-x:hidden!important;background:radial-gradient(700px 420px at 90% -5%,rgba(239,35,60,.16),transparent 58%),linear-gradient(135deg,#050507 0%,#09080b 48%,#10090c 100%)!important}
+  header{height:58px!important;min-height:58px!important;padding:7px 10px!important;position:sticky!important;top:0!important;z-index:25!important;background:rgba(7,7,10,.94)!important;border-bottom:1px solid rgba(239,35,60,.28)!important}
+  header .app-logo{width:38px!important;height:38px!important}
+  header .header-brand{gap:8px!important}
+  header .header-brand strong,.header-brand .brand{font-size:14px!important}
+  header .sub{font-size:8px!important}
+  .app-main{margin-left:0!important;padding:10px 10px 12px!important;max-width:none!important}
+  nav.quick-nav{display:none!important}
+  .page>.space{margin-bottom:9px!important;align-items:flex-start!important}
+  .page>.space h2{font-size:20px!important}
+  .card{border-radius:13px!important;padding:11px!important;background:linear-gradient(145deg,rgba(19,16,21,.97),rgba(10,10,14,.97))!important;border-color:#2d2329!important;box-shadow:0 10px 25px rgba(0,0,0,.2)!important}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  form{grid-template-columns:1fr!important}
+  .full{grid-column:auto!important}
+  input,select,textarea{font-size:13px!important}
+
+  /* Bottom nav — same interaction pattern as Redshine */
+  #pmMobileNav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:8px;right:8px;bottom:8px;height:62px;background:rgba(14,15,19,.97);border:1px solid rgba(245,197,66,.18);border-radius:18px;box-shadow:0 12px 35px rgba(0,0,0,.55);z-index:9999;padding:4px}
+  #pmMobileNav button{border:0;background:transparent;color:#8e929b;border-radius:13px;font:inherit;font-size:9px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+  #pmMobileNav button .mi{font-size:20px;line-height:1}
+  #pmMobileNav button.active{background:linear-gradient(145deg,rgba(239,35,60,.18),rgba(245,197,66,.08));color:#fff;border:1px solid rgba(239,35,60,.18)}
+  #pmMobileNav button.active .ml{color:#f5c542}
+  #pmMoreSheet{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:9998;align-items:flex-end;padding:0;display:none}
+  #pmMoreSheet.open{display:flex}
+  #pmMoreSheet .sheet{width:100%;max-height:78vh;overflow:auto;background:#101219;border:1px solid rgba(245,197,66,.2);border-bottom:0;border-radius:22px 22px 0 0;padding:14px 12px 24px;box-shadow:0 -18px 50px rgba(0,0,0,.55)}
+  #pmMoreSheet .handle{width:42px;height:4px;border-radius:9px;background:#555;margin:0 auto 12px}
+  #pmMoreSheet h3{margin:0 0 10px;font-size:16px}
+  #pmMoreSheet .more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  #pmMoreSheet .more-grid button{min-height:66px;border:1px solid rgba(255,255,255,.07);background:#171a22;color:#e9eaed;border-radius:13px;font:inherit;font-size:10px;font-weight:750}
+  #pmMoreSheet .more-grid button span{display:block;font-size:20px;margin-bottom:4px}
+  #pmMoreSheet .close-more{width:100%;margin-top:10px;border:1px solid rgba(239,35,60,.2);background:rgba(239,35,60,.08);color:#fff;border-radius:11px;padding:10px;font-weight:800}
+
+  /* Invoice: Redshine-style cockpit */
+  .modal{padding:8px!important;align-items:center!important}
+  .modalbox{width:calc(100vw - 16px)!important;max-width:none!important;height:auto!important;max-height:calc(100vh - 16px)!important;overflow:auto!important;padding:11px!important;border-radius:15px!important}
+  #modalBody{overflow:visible!important;display:block!important;flex:0 0 auto!important}
+  .rs-invoice-form.rs-invoice-cockpit{display:flex!important;flex-direction:column!important;height:auto!important;min-height:0!important;gap:8px!important}
+  .rs-invoice-workspace{display:flex!important;flex-direction:column!important;gap:8px!important;overflow:visible!important;min-height:0!important}
+  .rs-invoice-tools{display:flex!important;flex-direction:row!important;justify-content:flex-start!important;gap:6px!important;border-right:0!important;border-bottom:1px solid rgba(239,35,60,.12)!important;padding:0 0 6px!important;overflow-x:auto!important}
+  .rs-invoice-tool{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important}
+  .rs-invoice-center{display:flex!important;flex-direction:column!important;gap:7px!important;overflow:visible!important;min-height:0!important}
+  .rs-invoice-meta{grid-template-columns:1fr 1fr!important;gap:6px!important}
+  .rs-invoice-customer{padding:8px!important}
+  .rs-invoice-main{overflow:visible!important}
+  .rs-invoice-items{padding:8px!important;overflow:visible!important}
+  .rs-invoice-itemrows{overflow:visible!important}
+  .rs-invoice-items .invoice-item-row{display:grid!important;grid-template-columns:minmax(0,1fr) 58px 92px!important;gap:6px!important;align-items:end!important;padding:9px 0!important;border-bottom:1px solid rgba(255,255,255,.06)!important}
+  .rs-invoice-items .invoice-item-row .item-field{grid-column:1/-1!important;min-width:0!important}
+  .rs-invoice-items .invoice-item-row>div:nth-of-type(2){width:auto!important}
+  .rs-invoice-items .invoice-item-row>div:nth-of-type(3){width:auto!important}
+  .rs-invoice-items .invoice-item-row>button{width:100%!important;height:34px!important;padding:6px 7px!important;font-size:10px!important}
+  .rs-invoice-items .invoice-item-row>button:nth-last-child(2){grid-column:1/3!important}
+  .rs-invoice-items .invoice-item-row>button:last-child{grid-column:3!important}
+  .rs-invoice-items .item-price{font-weight:800!important;color:#f5c542!important}
+  .rs-invoice-items .item-name{width:100%!important}
+  .rs-invoice-items .suggestions{z-index:99999!important;max-height:220px!important;overflow:auto!important}
+  .rs-invoice-entry{grid-template-columns:1fr!important;gap:7px!important}
+  .rs-invoice-entry .full{grid-column:auto!important}
+  .rs-invoice-summary{height:auto!important;max-height:none!important;overflow:visible!important;padding:10px!important}
+  .rs-invoice-footer{justify-content:stretch!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important}
+  .rs-invoice-footer .primary,.rs-invoice-footer .secondary{min-width:0!important;width:100%!important}
+
+  /* Customer / Job / Invoice lists: details stay horizontal; actions alone go below */
+  #customerTable table,#jobTable table,#invoiceTable table{display:block!important;width:100%!important;border-collapse:separate!important;border-spacing:0 8px!important}
+  #customerTable table tr,#jobTable table tr,#invoiceTable table tr{display:grid!important;width:100%!important;background:transparent!important;border:0!important}
+  #customerTable table tr:first-child,#jobTable table tr:first-child,#invoiceTable table tr:first-child{display:none!important}
+  #customerTable table tr:not(:first-child),#jobTable table tr:not(:first-child),#invoiceTable table tr:not(:first-child){grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0 8px!important;padding:10px!important;background:#10131a!important;border:1px solid #2d2329!important;border-radius:13px!important;box-shadow:0 8px 22px rgba(0,0,0,.18)!important}
+  #customerTable td,#jobTable td,#invoiceTable td{display:block!important;min-width:0!important;width:auto!important;padding:2px 0!important;border:0!important;font-size:11px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;word-break:normal!important}
+  #customerTable .pm-c-email{display:none!important}
+  #customerTable .pm-actions,#jobTable .pm-actions,#invoiceTable .pm-actions{grid-column:1/-1!important;margin-top:7px!important;padding-top:8px!important;border-top:1px solid rgba(255,255,255,.07)!important;display:flex!important;flex-wrap:wrap!important;gap:6px!important;align-items:center!important}
+  #customerTable .pm-actions button,#jobTable .pm-actions button,#invoiceTable .pm-actions button{margin:0!important;min-height:34px!important;padding:7px 9px!important;font-size:10px!important;border-radius:10px!important;white-space:nowrap!important;flex:0 0 auto!important}
+  #jobTable .pm-j-date,#jobTable .pm-j-total,#jobTable .pm-j-paid,#jobTable .pm-j-status{display:none!important}
+  #invoiceTable .pm-i-date,#invoiceTable .pm-i-total,#invoiceTable .pm-i-paid,#invoiceTable .pm-i-status,#invoiceTable .pm-i-history{display:none!important}
+  #customerTable .pm-c-name,#jobTable .pm-j-customer,#invoiceTable .pm-i-no{font-weight:800!important;color:#f3f4f6!important}
+  #customerTable .pm-c-balance,#jobTable .pm-j-service,#invoiceTable .pm-i-customer{font-weight:750!important}
+  #customerTable .pm-c-phone,#jobTable .pm-j-balance,#invoiceTable .pm-i-balance{font-weight:750!important}
+  /* hide desktop-only table overflow */
+  .table-wrap,#customerTable,#jobTable,#invoiceTable{overflow:visible!important;max-width:none!important}
+}
+@media (min-width:769px){#pmMobileNav,#pmMoreSheet{display:none!important}}
+</style>
+<script>
+(function(){
+  function pmPhone(){return window.innerWidth<=768}
+  function pmBuildMobileNav(){
+    if(!pmPhone())return;
+    if(!document.getElementById('pmMobileNav')){
+      const nav=document.createElement('div');nav.id='pmMobileNav';
+      nav.innerHTML=`<button type="button" data-mobile="dashboard" onclick="go('dashboard')"><span class="mi">🏠</span><span class="ml">Home</span></button><button type="button" data-mobile="invoices" onclick="go('invoices')"><span class="mi">🧾</span><span class="ml">Invoice</span></button><button type="button" data-mobile="customers" onclick="go('customers')"><span class="mi">👤</span><span class="ml">Customer</span></button><button type="button" data-mobile="jobs" onclick="go('jobs')"><span class="mi">💼</span><span class="ml">Job</span></button><button type="button" data-mobile="more" onclick="document.getElementById('pmMoreSheet')?.classList.add('open')"><span class="mi">☰</span><span class="ml">More</span></button>`;
+      document.body.appendChild(nav);
+    }
+    if(!document.getElementById('pmMoreSheet')){
+      const sheet=document.createElement('div');sheet.id='pmMoreSheet';
+      const all=[['expenses','💸','Expenses'],['reports','📊','Reports'],['profit','🤝','Profit / Shares'],['employees','👷','Employees'],['reminders','🔔','Reminders'],['items','📦','Items'],['suppliers','🚚','Suppliers'],['settings','⚙️','Settings'],['admin','🛡️','Administrator']];
+      sheet.innerHTML=`<div class="sheet"><div class="handle"></div><h3>More</h3><div class="more-grid">${all.map(x=>`<button type="button" onclick="document.getElementById('pmMoreSheet')?.classList.remove('open');go('${x[0]}')"><span>${x[1]}</span>${x[2]}</button>`).join('')}</div><button type="button" class="close-more" onclick="document.getElementById('pmMoreSheet')?.classList.remove('open')">Close</button></div>`;
+      sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.classList.remove('open')});
+      document.body.appendChild(sheet);
+    }
+  }
+  function pmSyncNav(id){
+    if(!pmPhone())return;
+    pmBuildMobileNav();
+    document.querySelectorAll('#pmMobileNav button').forEach(b=>b.classList.toggle('active',b.dataset.mobile===id || (id==='customers'&&b.dataset.mobile==='customers') || (id==='invoices'&&b.dataset.mobile==='invoices') || (id==='jobs'&&b.dataset.mobile==='jobs')));
+  }
+  const oldGo=window.go;
+  if(typeof oldGo==='function'){
+    window.go=function(id){oldGo(id);pmSyncNav(id);document.getElementById('pmMoreSheet')?.classList.remove('open');};
+  }
+  window.addEventListener('resize',()=>{if(pmPhone())pmBuildMobileNav()});
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{pmBuildMobileNav();const a=document.querySelector('.page.active');if(a)pmSyncNav(a.id)},200));
+  setTimeout(()=>{pmBuildMobileNav();const a=document.querySelector('.page.active');if(a)pmSyncNav(a.id)},700);
+})();
 </script>
 </body>
 
