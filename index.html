@@ -671,6 +671,10 @@ button.receive{background:#10382b!important;border-color:#1d694f!important}
 }
 </style>
 
+
+<style id="pm-inline-contact-mobile-fix">
+.inline-contact-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.inline-contact-tools button,.inline-vcf-label{min-height:38px}.inline-vcf-label{display:inline-flex;align-items:center;justify-content:center;cursor:pointer}.inline-contact-hint{margin-top:5px}@media(max-width:800px){#inlineCustomerBox .grid{grid-template-columns:1fr!important;gap:8px!important}#inlineCustomerBox .inline-contact-tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}#inlineCustomerBox .inline-contact-tools button,#inlineCustomerBox .inline-vcf-label{width:100%;font-size:12px;padding:9px 8px}#inlineCustomerBox .row{display:grid;grid-template-columns:1fr 1fr;gap:7px!important}#inlineCustomerBox .row button{width:100%}}
+</style>
 </head>
 <body>
 <div id="login">
@@ -1288,6 +1292,41 @@ function refreshInvoiceCustomerSelect(selectedId=''){
   sel.value=selectedId||'';
 }
 function toggleInlineCustomer(){document.getElementById('inlineCustomerBox')?.classList.toggle('open')}
+async function importInlineCustomerContact(){
+  if(!('contacts' in navigator) || typeof navigator.contacts.select!=='function'){
+    return alert('Direct phone contact import is not supported by this browser. On supported Android Chrome, try again. On iPhone/Safari, use “Choose .vcf” and select the contact file.');
+  }
+  try{
+    const picked=await navigator.contacts.select(['name','tel','email'],{multiple:false});
+    const c=picked?.[0]; if(!c)return;
+    const box=document.getElementById('inlineCustomerBox'); if(!box)return;
+    const name=Array.isArray(c.name)?c.name.join(' ').trim():String(c.name||'');
+    const phone=Array.isArray(c.tel)?(c.tel.find(Boolean)||''):String(c.tel||'');
+    const email=Array.isArray(c.email)?(c.email.find(Boolean)||''):String(c.email||'');
+    box.querySelector('[name="name"]').value=name;
+    box.querySelector('[name="phone"]').value=phone;
+    box.querySelector('[name="email"]').value=email;
+    toast('Phone contact imported ✓');
+  }catch(err){ if(err?.name!=='AbortError') alert('Could not read the contact. Please use the .vcf option instead.'); }
+}
+async function importInlineCustomerVCard(event){
+  const file=event.target.files?.[0]; if(!file)return;
+  try{
+    const text=await file.text();
+    const block=(text.match(/BEGIN:VCARD[\s\S]*?END:VCARD/i)||[])[0]||text;
+    const get=(re)=>{const m=block.match(re);return m?m[1].replace(/\\n/g,' ').replace(/\\,/g,',').replace(/\\;/g,';').trim():''};
+    let name=get(/(?:^|\n)FN(?:;[^:]*)?:(.*)/i);
+    if(!name){const n=get(/(?:^|\n)N(?:;[^:]*)?:(.*)/i);name=n.split(';').filter(Boolean).reverse().join(' ').trim();}
+    const phone=get(/(?:^|\n)TEL(?:;[^:]*)?:(.*)/i);
+    const email=get(/(?:^|\n)EMAIL(?:;[^:]*)?:(.*)/i);
+    const box=document.getElementById('inlineCustomerBox'); if(!box)return;
+    box.querySelector('[name="name"]').value=name;
+    box.querySelector('[name="phone"]').value=phone;
+    box.querySelector('[name="email"]').value=email;
+    toast('vCard contact imported ✓');
+  }catch(err){ alert('Could not read this vCard file.'); }
+  event.target.value='';
+}
 async function saveInlineCustomer(){
   const box=document.getElementById('inlineCustomerBox');
   const o={name:box?.querySelector('[name="name"]')?.value||'',phone:box?.querySelector('[name="phone"]')?.value||'',email:box?.querySelector('[name="email"]')?.value||'',address:box?.querySelector('[name="address"]')?.value||''};
@@ -1349,7 +1388,7 @@ function openInvoice(inv=null){
             <button type="button" class="secondary" onclick="toggleInlineCustomer()">+ New Customer</button>
           </div>
           <div id="invoicePreviousBalance" class="rs-invoice-previous hint">${previousText}</div>
-          <div id="inlineCustomerBox" class="inline-customer"><div class="grid"><div><label>Name</label><input name="name" placeholder="Customer name"></div><div><label>Phone / WhatsApp</label><input name="phone" placeholder="07XXXXXXXX"></div><div><label>Email</label><input name="email"></div><div><label>Address</label><input name="address"></div></div><div class="row" style="margin-top:7px"><button type="button" class="primary" onclick="saveInlineCustomer()">Save Customer</button><button type="button" class="secondary" onclick="toggleInlineCustomer()">Cancel</button></div></div>
+          <div id="inlineCustomerBox" class="inline-customer"><div class="grid"><div><label>Name</label><input name="name" placeholder="Customer name"></div><div><label>Phone / WhatsApp</label><input name="phone" placeholder="07XXXXXXXX" inputmode="tel"></div><div><label>Email</label><input name="email" type="email"></div><div><label>Address</label><input name="address"></div></div><div class="inline-contact-tools"><button type="button" class="secondary" onclick="importInlineCustomerContact()">📱 Import Phone Contact</button><label class="secondary inline-vcf-label"><input id="inlineCustomerVcf" type="file" accept=".vcf,text/vcard" style="display:none" onchange="importInlineCustomerVCard(event)">📇 Choose .vcf</label></div><div class="hint inline-contact-hint">Choose a saved phone contact or a .vcf file to fill the customer details automatically.</div><div class="row" style="margin-top:7px"><button type="button" class="primary" onclick="saveInlineCustomer()">Save Customer</button><button type="button" class="secondary" onclick="toggleInlineCustomer()">Cancel</button></div></div>
         </div>
         <div class="rs-invoice-main">
           <div id="invoiceItems" class="card rs-invoice-items">
