@@ -719,9 +719,9 @@ let data={customers:[],jobs:[],invoices:[],expenses:[],settings:null};
 function localCatalog(){try{return JSON.parse(localStorage.getItem('prabhash_item_catalog')||'[]')}catch(e){return []}}
 function catalogState(){
   let v=data.settings?.item_catalog;
-  if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
-  if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[],customer_transactions:Array.isArray(v.customer_transactions)?v.customer_transactions:[],supplier_transactions:Array.isArray(v.supplier_transactions)?v.supplier_transactions:[],profit_settings:v.profit_settings&&typeof v.profit_settings==='object'?v.profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:Array.isArray(v.profit_withdrawals)?v.profit_withdrawals:[],employees:Array.isArray(v.employees)?v.employees:[],employee_advances:Array.isArray(v.employee_advances)?v.employee_advances:[],salary_records:Array.isArray(v.salary_records)?v.salary_records:[],job_payments:Array.isArray(v.job_payments)?v.job_payments:[]};
-  let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
+  if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[],job_photos:{}};
+  if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[],customer_transactions:Array.isArray(v.customer_transactions)?v.customer_transactions:[],supplier_transactions:Array.isArray(v.supplier_transactions)?v.supplier_transactions:[],profit_settings:v.profit_settings&&typeof v.profit_settings==='object'?v.profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:Array.isArray(v.profit_withdrawals)?v.profit_withdrawals:[],employees:Array.isArray(v.employees)?v.employees:[],employee_advances:Array.isArray(v.employee_advances)?v.employee_advances:[],salary_records:Array.isArray(v.salary_records)?v.salary_records:[],job_payments:Array.isArray(v.job_payments)?v.job_payments:[],job_photos:v.job_photos&&typeof v.job_photos==='object'?v.job_photos:{}};
+  let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[],job_photos:{}};
 }
 async function saveCatalog(st){
   const safe = st && typeof st === 'object' ? st : catalogState();
@@ -871,8 +871,8 @@ function updateInvoicePreviousBalance(customerId){
 }
 function openCustomerTransaction(customerId,type){
   const c=customer(customerId); if(!c?.id)return;
-  const label=type==='receive'?'Receive Money':'Give Money';
-  openModal(`${label} — ${esc(c.name)}`,`<form onsubmit="saveCustomerTransaction(event,'${customerId}','${type}')"><div class="card" style="margin-bottom:10px"><div class="muted">Current customer balance</div><div class="kpi" id="txnCurrentBalance">${money(customerOutstanding(customerId))}</div><div class="hint">Positive = customer owes you · Negative = customer credit</div></div><div><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div><label>Date</label><input name="date" type="date" value="${todayISO()}" required></div><div class="full"><label>Notes</label><textarea name="notes" placeholder="Payment / advance / adjustment note"></textarea></div><div class="full"><button class="${type==='receive'?'receive':'danger'}">${type==='receive'?'Receive Money':'Give Money'}</button></div></form>`)
+  const label=type==='receive'?'Pay':'Pending';
+  openModal(`${label} — ${esc(c.name)}`,`<form onsubmit="saveCustomerTransaction(event,'${customerId}','${type}')"><div class="card" style="margin-bottom:10px"><div class="muted">Current customer balance</div><div class="kpi" id="txnCurrentBalance">${money(customerOutstanding(customerId))}</div><div class="hint">Positive = customer owes you · Negative = customer credit</div></div><div><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div><label>Date</label><input name="date" type="date" value="${todayISO()}" required></div><div class="full"><label>Notes</label><textarea name="notes" placeholder="Payment / advance / adjustment note"></textarea></div><div class="full"><button class="${type==='receive'?'receive':'danger'}">${type==='receive'?'Pay':'Pending'}</button></div></form>`)
 }
 async function saveCustomerTransactions(rows){
   const st=catalogState(); st.customer_transactions=Array.isArray(rows)?rows:[]; return await saveCatalog(st);
@@ -1060,7 +1060,7 @@ function toggleJobNewCustomer(){const box=document.getElementById('jobNewCustome
 function openJob(j=null){
   const opts=data.customers.map(c=>`<option value="${c.id}" ${j?.customer_id===c.id?'selected':''}>${esc(c.name)}${isAdmin&&c.phone?' — '+esc(c.phone):''}</option>`).join('');
   const paid=j?jobPaymentTotal(j.id):0, bal=j?jobBalance(j):0;
-  openModal(j?'Edit Job':'New Job',`<form id="jobForm" onsubmit="saveJob(event,'${j?.id||''}')">
+  openModal(j?'Edit Job':'New Job',`<form id="jobForm" data-job-id="${j?.id||''}" onsubmit="saveJob(event,'${j?.id||''}')">
   <input type="hidden" id="jobCustomerMode" name="customer_mode" value="existing">
   <div class="card" style="margin-bottom:10px"><div class="space"><div><label>Customer</label><select name="customer_id"><option value="">Walk-in / No Customer</option>${opts}</select></div><button type="button" class="secondary" onclick="toggleJobNewCustomer()">➕ New Customer</button></div>
   <div id="jobNewCustomerBox" style="display:none;margin-top:10px"><div><label>New Customer Name</label><input name="new_customer_name" placeholder="Customer name"></div>${isAdmin?`<div><label>Phone / WhatsApp</label><input name="new_customer_phone" placeholder="07xxxxxxxx"></div>`:''}<div class="hint" style="margin-top:5px">You can start the job without a customer name too.</div></div></div>
@@ -1069,10 +1069,86 @@ function openJob(j=null){
   <div><label>Total agreed</label><input type="number" step=".01" min="0" name="total" value="${j?.total||0}"></div>
   <div><label>Cost</label><input type="number" step=".01" min="0" name="cost" value="${j?.cost||0}"></div>
   <div><label>Status</label><select name="status"><option ${j?.status==='Booked'?'selected':''}>Booked</option><option ${j?.status==='In Progress'?'selected':''}>In Progress</option><option ${j?.status==='Completed'?'selected':''}>Completed</option><option ${j?.status==='Delivered'?'selected':''}>Delivered</option><option ${j?.status==='Cancelled'?'selected':''}>Cancelled</option></select></div>
+  <div class="full"><label>📷 Job Photos</label><input id="jobPhotoFiles" type="file" accept="image/*" multiple capture="environment" onchange="previewJobPhotos(event)" style="width:100%;padding:10px"><div class="hint">Add photos of the device, damage, parts or completed work. Photos are saved to Supabase Cloud for this job. Save the Job first if this is a new Job.</div><div id="jobPhotoPreview" class="job-photo-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div></div>
   <div class="full"><label>Notes</label><textarea name="notes">${esc(j?.notes)}</textarea></div>
   ${j?`<div class="card full" style="margin-top:4px"><div class="grid"><div><div class="muted">Job Total</div><div class="kpi">${money(j.total)}</div></div><div><div class="muted">Paid / Advance</div><div class="kpi paid-strong">${money(paid)}</div></div><div><div class="muted">Remaining</div><div class="kpi due-strong">${money(bal)}</div></div></div><div style="margin-top:10px"><b>Payment History</b><div style="margin-top:5px">${jobPaymentHistoryHtml(j.id)}</div></div><button type="button" class="receive" style="margin-top:10px" onclick="openJobPayment('${j.id}')">💰 Collect Payment / Advance</button></div>`:''}
-  <div class="full"><button class="primary">${j?'Save Changes':'Start Job'}</button></div></form>`)
+  <div class="full"><button class="primary">${j?'Save Changes':'Start Job'}</button></div></form>`);renderJobPhotos(j?.id||'')
 }
+const JOB_PHOTO_BUCKET='job-photos';
+function jobPhotoKey(id){return 'prabhash_job_photos_'+String(id)}
+function getLocalJobPhotos(id){try{return JSON.parse(localStorage.getItem(jobPhotoKey(id))||'[]')}catch(_){return []}}
+function jobPhotoMeta(id){const st=catalogState();return Array.isArray(st.job_photos?.[String(id)])?st.job_photos[String(id)]:[]}
+function saveJobPhotoMetaLocal(id,rows){try{localStorage.setItem('prabhash_job_photo_meta_'+String(id),JSON.stringify(rows))}catch(_){} }
+async function getJobPhotoUrls(id){
+  const rows=jobPhotoMeta(id); const out=[];
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];
+    if(r?.path){
+      const {data,error}=await sb.storage.from(JOB_PHOTO_BUCKET).createSignedUrl(r.path,3600);
+      if(!error&&data?.signedUrl) out.push({...r,url:data.signedUrl,index:i});
+    }
+  }
+  return out;
+}
+async function renderJobPhotos(id){
+  const box=document.getElementById('jobPhotoPreview');if(!box)return;
+  box.innerHTML='<div class="hint">Loading photos…</div>';
+  const cloud=await getJobPhotoUrls(id);
+  const local=getLocalJobPhotos(id);
+  const html=[];
+  cloud.forEach((p)=>html.push(`<div style="position:relative"><img src="${p.url}" alt="Job photo" style="width:82px;height:82px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"><button type="button" class="danger" style="padding:2px 7px;position:absolute;top:2px;right:2px" onclick="removeJobPhoto('${id}',${p.index})">×</button></div>`));
+  local.forEach((src,i)=>html.push(`<div style="position:relative"><img src="${src}" alt="Pending job photo" style="width:82px;height:82px;object-fit:cover;border-radius:8px;border:1px dashed var(--gold)"><button type="button" class="danger" style="padding:2px 7px;position:absolute;top:2px;right:2px" onclick="removeLocalJobPhoto('${id}',${i})">×</button></div>`));
+  box.innerHTML=html.join('')||'<div class="hint">No photos added yet.</div>';
+}
+async function uploadJobPhoto(id,file){
+  if(!id)return false;
+  if(!file.type.startsWith('image/'))return false;
+  if(file.size>5*1024*1024){alert('Please choose images smaller than 5 MB each.');return false;}
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=`${currentUser?.id||'user'}/${id}/${crypto.randomUUID()}.${ext}`;
+  const {error}=await sb.storage.from(JOB_PHOTO_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+  if(error){console.error(error);alert('Job photo cloud upload failed. Make sure the Supabase Storage bucket "job-photos" and its policies are set up.\n\n'+error.message);return false;}
+  const st=catalogState(); st.job_photos=st.job_photos||{}; st.job_photos[String(id)]=[...(st.job_photos[String(id)]||[]),{path,name:file.name,type:file.type,created_at:new Date().toISOString()}];
+  return await saveCatalog(st);
+}
+async function uploadLocalJobPhotos(id){
+  const pending=getLocalJobPhotos('');
+  if(!id||!pending.length)return;
+  for(let i=0;i<pending.length;i++){
+    try{
+      const res=await fetch(pending[i]); const blob=await res.blob();
+      const file=new File([blob],`job-photo-${Date.now()}-${i}.jpg`,{type:blob.type||'image/jpeg'});
+      await uploadJobPhoto(id,file);
+    }catch(err){console.error('Pending photo upload failed',err)}
+  }
+  localStorage.removeItem(jobPhotoKey(''));
+  await renderJobPhotos(id);
+}
+async function previewJobPhotos(e){
+  const files=[...(e.target.files||[])];if(!files.length)return;
+  const form=document.getElementById('jobForm'),id=form?.dataset.jobId||'';
+  for(const file of files){
+    if(!file.type.startsWith('image/'))continue;
+    if(file.size>5*1024*1024){alert('Please choose images smaller than 5 MB each.');continue;}
+    if(id) await uploadJobPhoto(id,file);
+    else{
+      const pending=getLocalJobPhotos('');
+      const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+      pending.push(dataUrl);
+      try{localStorage.setItem(jobPhotoKey(''),JSON.stringify(pending))}catch(_){alert('Temporary photo storage is full. Please save the Job first, then add photos.');break;}
+    }
+  }
+  if(id)await renderJobPhotos(id); else await renderJobPhotos('');
+  e.target.value='';
+}
+async function removeJobPhoto(id,index){
+  const rows=jobPhotoMeta(id); const item=rows[index]; if(!item)return;
+  if(!confirm('Delete this job photo?'))return;
+  if(item.path){const {error}=await sb.storage.from(JOB_PHOTO_BUCKET).remove([item.path]);if(error){alert('Could not delete photo: '+error.message);return;}}
+  const st=catalogState();st.job_photos=st.job_photos||{};st.job_photos[String(id)]=rows.filter((_,i)=>i!==index);await saveCatalog(st);await renderJobPhotos(id);
+}
+function removeLocalJobPhoto(id,index){const photos=getLocalJobPhotos(id);photos.splice(index,1);try{localStorage.setItem(jobPhotoKey(id),JSON.stringify(photos))}catch(_){}renderJobPhotos(id)}
+
 async function saveJob(e,id){
   e.preventDefault();const f=new FormData(e.target);let customerId=String(f.get('customer_id')||'');
   if(!id && f.get('customer_mode')==='new'){
@@ -1080,7 +1156,7 @@ async function saveJob(e,id){
     if(name){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey({name,phone}));if(existing)customerId=existing.id;else{const newCustomerId=crypto.randomUUID();const q=await sb.from('customers').insert({id:newCustomerId,name,phone,email:'',address:''});if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));customerId=newCustomerId;}}
   }
   let o={customer_id:customerId||null,service:f.get('service'),date:f.get('date')||todayISO(),total:Math.max(0,Number(f.get('total'))||0),cost:Math.max(0,Number(f.get('cost'))||0),status:f.get('status')||'Booked',notes:f.get('notes')||''};
-  let q=id?await sb.from('jobs').update(o).eq('id',id):await sb.from('jobs').insert(o);if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));closeModal();await loadAll();render();toast(id?'Job updated ✓':'Job started ✓')
+  let q=id?await sb.from('jobs').update(o).eq('id',id).select('id').single():await sb.from('jobs').insert(o).select('id').single();if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));const savedId=id||q.data?.id;if(savedId){const form=document.getElementById('jobForm');if(form)form.dataset.jobId=savedId;await uploadLocalJobPhotos(savedId)}closeModal();await loadAll();render();toast(id?'Job updated ✓':'Job started ✓')
 }
 function openJobPayment(jobId){const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const due=jobBalance(j);openModal(`Collect Payment — ${esc(j.service||'Job')}`,`<div class="card" style="margin-bottom:10px"><div class="grid"><div><div class="muted">Job Total</div><div class="kpi">${money(j.total)}</div></div><div><div class="muted">Already Paid</div><div class="kpi paid-strong">${money(jobPaymentTotal(j.id))}</div></div><div><div class="muted">Remaining</div><div class="kpi due-strong">${money(due)}</div></div></div></div><form onsubmit="saveJobPayment(event,'${j.id}')"><div><label>Payment / Advance Amount</label><input name="amount" type="number" min="0.01" max="${Math.max(due,0)}" step="0.01" required></div><div><label>Date</label><input name="date" type="date" value="${todayISO()}" required></div><div><label>Payment Method</label><select name="method"><option>Cash</option><option>Bank</option><option>Card</option><option>WhatsApp / Online</option><option>Other</option></select></div><div class="full"><label>Note</label><textarea name="notes" placeholder="Advance / balance payment"></textarea></div><div class="full"><button class="primary">Save Payment</button></div></form>`)}
 async function saveJobPayment(e,jobId){e.preventDefault();const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const f=new FormData(e.target),amount=Math.max(0,Number(f.get('amount'))||0),due=Math.max(0,jobBalance(j));if(!amount)return alert('Enter payment amount.');if(amount>due)return alert(`Payment cannot exceed remaining balance of ${money(due)}.`);const rows=[...jobPayments(),{id:crypto.randomUUID(),job_id:j.id,customer_id:j.customer_id||null,amount,date:f.get('date')||todayISO(),method:f.get('method')||'Cash',notes:String(f.get('notes')||'').trim(),created_at:new Date().toISOString(),by:currentUser?.email||''}];if(!await saveJobPayments(rows))return;closeModal();await loadAll();render();toast('Job payment saved ✓')}
@@ -1228,18 +1304,30 @@ async function saveNewInvoiceItemAndAdd(e){
   const input=document.getElementById('quickInvoiceItem');if(input){input.value='';input.focus();}
 }
 function invoiceItemNameInput(input){
-  const q=input.value.trim().toLowerCase();
-  const row=input.closest('.invoice-item-row');
+  const q=String(input?.value||'').trim().toLowerCase();
+  const row=input?.closest('.invoice-item-row');
   if(!row)return;
-  const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===q);
-  if(stock){
-    row.querySelector('.item-price').value=Number(stock.price)||0;
-    row.dataset.cost=Number(stock.cost)||0;
-    const info=row.querySelector('.stock-info');if(info)info.textContent=`Stock: ${Number(stock.qty)||0}`;
+  const box=row.querySelector('.suggestions');
+  if(box){
+    if(!q){box.innerHTML='';box.classList.remove('open');}
+    else{
+      const matches=catalog().filter(x=>String(x.name||'').toLowerCase().includes(q)).slice(0,12);
+      box.innerHTML=matches.map(x=>`<button type='button' onclick='pickInvoiceItem(this, ${JSON.stringify(String(x.name||''))}, ${Number(x.price)||0}, ${Number(x.cost)||0})'><span>${esc(x.name)}</span><span class='item-price-small'>${money(x.price)}</span></button>`).join('');
+      if(matches.length)box.classList.add('open');else box.classList.remove('open');
+    }
+  }
+  const exact=catalog().find(x=>String(x.name||'').trim().toLowerCase()===q);
+  if(exact){
+    row.querySelector('.item-price').value=Number(exact.price)||0;
+    row.dataset.cost=Number(exact.cost)||0;
+    const info=row.querySelector('.stock-info');if(info)info.textContent=`Stock: ${Number(exact.qty)||0}${exact.supplier?' • '+esc(exact.supplier):''}`;
     updateInvoiceTotals();
+  }else if(!q){
+    const info=row.querySelector('.stock-info');if(info)info.textContent='Not a saved stock item';
   }
 }
-function pickInvoiceItem(btn,name,price,cost){const row=btn.closest('.invoice-item-row');if(!row)return;row.querySelector('.item-name').value=name;row.querySelector('.item-price').value=Number(price)||0;row.dataset.cost=Number(cost)||0;updateInvoiceTotals();}
+
+function pickInvoiceItem(btn,name,price,cost){const row=btn.closest('.invoice-item-row');if(!row)return;row.querySelector('.item-name').value=name;row.querySelector('.item-price').value=Number(price)||0;row.dataset.cost=Number(cost)||0;const box=row.querySelector('.suggestions');if(box){box.innerHTML='';box.classList.remove('open')}const info=row.querySelector('.stock-info');const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());if(info&&stock)info.textContent=`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}`;updateInvoiceTotals();}
 async function saveItemFromInvoice(btn){
   const row=btn.closest('.invoice-item-row');
   const name=row?.querySelector('.item-name')?.value?.trim()||'';
@@ -1467,12 +1555,12 @@ async function saveInvoice(e,id){
   const stockSaved=await saveCatalog(st);
   closeModal();await loadAll();render();toast(stockSaved?(balance<0?'Invoice saved — change due ✓':'Invoice saved ✓'):'Invoice saved ✓ — stock sync failed');
 }
-function purchaseRowsHtml(rows){return rows.map((x)=>`<div class="purchase-row row" style="margin-bottom:8px;align-items:end"><div style="flex:2"><label>Item</label><select class="purchase-item" onchange="purchaseItemChanged(this)"><option value="">Select item</option>${catalog().map(i=>`<option value="${esc(i.name)}" ${i.name===x.name?'selected':''}>${esc(i.name)} (Stock: ${Number(i.qty)||0})</option>`).join('')}</select></div><div style="width:90px"><label>Qty</label><input class="purchase-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(x.qty)||1))}"></div><div style="width:130px"><label>Unit cost</label><input class="purchase-cost" type="number" min="0" step="0.01" value="${Number(x.cost)||0}"></div><button type="button" class="danger" onclick="this.closest('.purchase-row').remove()">Remove</button></div>`).join('')}
-function openExpense(x=null){const pi=purchaseInfo(x), rows=pi?.items||[{name:'',qty:1,cost:0}], sup=pi?.supplier||'';openModal(x?'Edit Expense':'New Expense',`<form onsubmit="saveExpense(event,'${x?.id||''}')"><div><label>Date</label><input type="date" name="date" value="${x?.date||todayISO()}" required></div><div><label>Category</label><select name="category" id="expenseCategory" onchange="togglePurchaseFields()"><option ${x?.category==='Purchase'?'selected':''}>Purchase</option><option ${x?.category==='Equipment'?'selected':''}>Equipment</option><option ${x?.category==='Printing'?'selected':''}>Printing</option><option ${x?.category==='Travel'?'selected':''}>Travel</option><option ${x?.category==='Staff'?'selected':''}>Staff</option><option ${x?.category==='Other'?'selected':''}>Other</option></select></div><div id="purchaseFields" class="full"><div><label>Supplier</label><select id="purchaseSupplier"><option value="">Select supplier</option>${suppliers().map(z=>`<option value="${esc(z.name)}" ${z.name===sup?'selected':''}>${esc(z.name)}</option>`).join('')}</select></div><div style="margin-top:12px"><div class="space"><label>Purchased Items</label><button type="button" class="secondary" onclick="addPurchaseRow()">+ Add Item</button></div><div id="purchaseRows">${purchaseRowsHtml(rows)}</div></div></div><div class="full"><label>Description</label><input id="expenseDescription" name="description" value="${esc(pi?.label||(!pi?x?.description:''))}"></div><div><label>Amount</label><input id="expenseAmount" type="number" step="0.01" min="0" name="amount" value="${x?.amount||0}" required></div><div class="full"><button class="primary">Save Expense</button></div></form>`);togglePurchaseFields();}
+function purchaseRowsHtml(rows){return rows.map((x)=>`<div class="purchase-row row" style="margin-bottom:8px;align-items:end"><div style="flex:2"><label>Item (optional)</label><input class="purchase-item" list="expenseItemOptions" value="${esc(x.name||'')}" placeholder="Type item or leave blank" onchange="purchaseItemChanged(this)"><datalist id="expenseItemOptions">${catalog().map(i=>`<option value="${esc(i.name)}">`).join('')}</datalist></div><div style="width:90px"><label>Qty</label><input class="purchase-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(x.qty)||1))}"></div><div style="width:130px"><label>Unit cost</label><input class="purchase-cost" type="number" min="0" step="0.01" value="${Number(x.cost)||0}"></div><button type="button" class="danger" onclick="this.closest('.purchase-row').remove()">Remove</button></div>`).join('')}
+function openExpense(x=null){const pi=purchaseInfo(x), rows=pi?.items||[{name:'',qty:1,cost:0}], sup=pi?.supplier||'';openModal(x?'Edit Expense':'New Expense',`<form onsubmit="saveExpense(event,'${x?.id||''}')"><div><label>Date</label><input type="date" name="date" value="${x?.date||todayISO()}" required></div><div><label>Category</label><select name="category" id="expenseCategory" onchange="togglePurchaseFields()"><option ${x?.category==='Purchase'?'selected':''}>Purchase</option><option ${x?.category==='Equipment'?'selected':''}>Equipment</option><option ${x?.category==='Printing'?'selected':''}>Printing</option><option ${x?.category==='Travel'?'selected':''}>Travel</option><option ${x?.category==='Staff'?'selected':''}>Staff</option><option ${x?.category==='Other'?'selected':''}>Other</option></select></div><div id="purchaseFields" class="full"><div><label>Supplier (optional)</label><select id="purchaseSupplier"><option value="">No supplier / select later</option>${suppliers().map(z=>`<option value="${esc(z.name)}" ${z.name===sup?'selected':''}>${esc(z.name)}</option>`).join('')}</select></div><div style="margin-top:12px"><div class="space"><label>Items (optional)</label><button type="button" class="secondary" onclick="addPurchaseRow()">+ Add Item</button></div><div id="purchaseRows">${purchaseRowsHtml(rows)}</div></div></div><div class="full"><label>Description</label><input id="expenseDescription" name="description" value="${esc(pi?.label||(!pi?x?.description:''))}"></div><div><label>Amount</label><input id="expenseAmount" type="number" step="0.01" min="0" name="amount" value="${x?.amount||0}" required></div><div class="full"><button class="primary">Save Expense</button></div></form>`);togglePurchaseFields();}
 function togglePurchaseFields(){const p=document.getElementById('purchaseFields'),cat=document.getElementById('expenseCategory')?.value;if(p)p.style.display=cat==='Purchase'?'block':'none'}
 function addPurchaseRow(){const box=document.getElementById('purchaseRows');if(box)box.insertAdjacentHTML('beforeend',purchaseRowsHtml([{name:'',qty:1,cost:0}]))}
 function purchaseItemChanged(sel){const it=catalog().find(x=>x.name===sel.value);const row=sel.closest('.purchase-row');if(it&&row)row.querySelector('.purchase-cost').value=Number(it.cost)||0}
-async function saveExpense(e,id){e.preventDefault();const f=new FormData(e.target),cat=f.get('category');let amount=Number(f.get('amount'))||0,desc=f.get('description')||'';const old=id?data.expenses.find(x=>x.id===id):null;const oldPi=purchaseInfo(old);const st=catalogState();if(cat==='Purchase'){const rows=[...document.querySelectorAll('.purchase-row')].map(r=>({name:r.querySelector('.purchase-item')?.value||'',qty:Math.max(1,Math.round(Number(r.querySelector('.purchase-qty')?.value)||1)),cost:Number(r.querySelector('.purchase-cost')?.value)||0})).filter(x=>x.name);if(!rows.length)return alert('Add at least one purchased item.');const supplier=document.getElementById('purchaseSupplier')?.value||'';if(!supplier)return alert('Select a supplier.');if(!amount)amount=rows.reduce((s,x)=>s+x.qty*x.cost,0);if(oldPi)for(const r of oldPi.items||[])changeStock(r.name,-Math.max(0,Math.round(Number(r.qty)||0)),st);for(const r of rows)changeStock(r.name,Math.max(0,Math.round(Number(r.qty)||0)),st);desc=setPurchaseDescription({supplier,items:rows},desc||'Stock Purchase')}else if(oldPi){for(const r of oldPi.items||[])changeStock(r.name,-Math.max(0,Math.round(Number(r.qty)||0)),st)}const o={date:f.get('date'),category:cat,description:desc,amount};const q=id?await sb.from('expenses').update(o).eq('id',id):await sb.from('expenses').insert(o);if(q.error)return alert(q.error.message);if(cat==='Purchase'||oldPi)await saveCatalog(st);closeModal();await loadAll();render();toast('Expense saved ✓')}
+async function saveExpense(e,id){e.preventDefault();const f=new FormData(e.target),cat=f.get('category');let amount=Number(f.get('amount'))||0,desc=f.get('description')||'';const old=id?data.expenses.find(x=>x.id===id):null;const oldPi=purchaseInfo(old);const st=catalogState();if(cat==='Purchase'){const rows=[...document.querySelectorAll('.purchase-row')].map(r=>({name:r.querySelector('.purchase-item')?.value||'',qty:Math.max(1,Math.round(Number(r.querySelector('.purchase-qty')?.value)||1)),cost:Number(r.querySelector('.purchase-cost')?.value)||0})).filter(x=>x.name);const supplier=document.getElementById('purchaseSupplier')?.value||'';if(!amount)amount=rows.reduce((s,x)=>s+x.qty*x.cost,0);if(oldPi)for(const r of oldPi.items||[])changeStock(r.name,-Math.max(0,Math.round(Number(r.qty)||0)),st);for(const r of rows)if(catalog().some(it=>it.name===r.name))changeStock(r.name,Math.max(0,Math.round(Number(r.qty)||0)),st);desc=rows.length||supplier?setPurchaseDescription({supplier,items:rows},desc||'Stock Purchase'):(desc||'Purchase expense')}else if(oldPi){for(const r of oldPi.items||[])changeStock(r.name,-Math.max(0,Math.round(Number(r.qty)||0)),st)}const o={date:f.get('date'),category:cat,description:desc,amount};const q=id?await sb.from('expenses').update(o).eq('id',id):await sb.from('expenses').insert(o);if(q.error)return alert(q.error.message);if(cat==='Purchase'||oldPi)await saveCatalog(st);closeModal();await loadAll();render();toast('Expense saved ✓')}
 function render(){renderDashboard();renderCustomers();renderJobs();renderInvoices();renderExpenses();renderReports();renderProfitShares();renderEmployees();renderReminders();renderItems();renderSuppliers()}
 function invoiceGrossProfit(inv){const items=Array.isArray(inv?.items)?inv.items:[];const cogs=items.reduce((s,it)=>s+(Number(it.qty)||0)*(Number(it.cost)||0),0);return Number(inv?.total||0)-cogs}
 function renderDashboard(){
@@ -1501,7 +1589,7 @@ function customerWhatsApp(id){
   const msg=`${data.settings.name}\n\nDear ${c.name},\n\nCustomer Account Summary / ගිණුම් විස්තර\n\nCurrent Balance: ${money(Math.abs(bal))}\nStatus: ${status}\n\n${bal>0?'Please settle the outstanding balance. / කරුණාකර ඉතිරි මුදල ගෙවන්න.':bal<0?'Customer credit / advance available. / ඔබගේ අත්තිකාරම් මුදල ගිණුමේ ඇත.':'Your account is settled. / ඔබගේ ගිණුම සම්පූර්ණයෙන් පියවා ඇත.'}\n\nThank you for choosing ${data.settings.name}.`;
   openModal('WhatsApp Customer Message',`<div class=\"card\"><textarea id=\"customerWaMessage\" style=\"min-height:300px;white-space:pre-wrap\">${esc(msg)}</textarea><button type=\"button\" class=\"primary\" style=\"margin-top:10px\" onclick=\"sendWa('${p}','customerWaMessage')\">Send WhatsApp</button></div>`);
 }
-function renderCustomers(){let q=(customerSearch.value||'').toLowerCase();let r=data.customers.filter(c=>(c.name+' '+(isAdmin?(c.phone||'')+' ':'')+(c.email||'')).toLowerCase().includes(q));customerTable.innerHTML=r.length?`<table><tr><th>Name</th>${isAdmin?'<th>Phone</th>':''}<th>Balance</th><th>Email</th><th>Actions</th></tr>${r.map(c=>{const bal=customerOutstanding(c.id);return `<tr><td class="pm-c-name">${esc(c.name)}</td>${isAdmin?`<td class="pm-c-phone">${esc(c.phone||'')}</td>`:''}<td class="pm-c-balance ${bal>0?'due-strong':bal<0?'overpaid-strong':'paid-strong'}">${bal>0?'Due: ':bal<0?'Credit: ':''}${money(Math.abs(bal))}</td><td class="pm-c-email">${esc(c.email||'')}</td><td class="pm-actions"><button class="receive" onclick="openCustomerTransaction('${c.id}','receive')">Receive Money</button> <button class="danger" onclick="openCustomerTransaction('${c.id}','give')">Give Money</button> <button class="secondary" onclick="openCustomerHistory('${c.id}')">History</button> <button class="secondary" onclick="customerWhatsApp('${c.id}')">WhatsApp</button> <button class="secondary" onclick="openCustomer(data.customers.find(x=>x.id==='${c.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteRecord('customers','${c.id}','customer')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No customers.</div>'}
+function renderCustomers(){let q=(customerSearch.value||'').toLowerCase();let r=data.customers.filter(c=>(c.name+' '+(isAdmin?(c.phone||'')+' ':'')+(c.email||'')).toLowerCase().includes(q));customerTable.innerHTML=r.length?`<table><tr><th>Name</th>${isAdmin?'<th>Phone</th>':''}<th>Balance</th><th>Email</th><th>Actions</th></tr>${r.map(c=>{const bal=customerOutstanding(c.id);return `<tr><td class="pm-c-name">${esc(c.name)}</td>${isAdmin?`<td class="pm-c-phone">${esc(c.phone||'')}</td>`:''}<td class="pm-c-balance ${bal>0?'due-strong':bal<0?'overpaid-strong':'paid-strong'}">${bal>0?'Due: ':bal<0?'Credit: ':''}${money(Math.abs(bal))}</td><td class="pm-c-email">${esc(c.email||'')}</td><td class="pm-actions"><button class="receive" onclick="openCustomerTransaction('${c.id}','receive')">Pay</button> <button class="danger" onclick="openCustomerTransaction('${c.id}','give')">Pending</button> <button class="secondary" onclick="openCustomerHistory('${c.id}')">History</button> <button class="secondary" onclick="customerWhatsApp('${c.id}')">WhatsApp</button> <button class="secondary" onclick="openCustomer(data.customers.find(x=>x.id==='${c.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteRecord('customers','${c.id}','customer')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No customers.</div>'}
 function jobWhatsApp(id){
   const j=data.jobs.find(x=>x.id===id),c=customer(j?.customer_id);if(!j||!c)return;
   let p=String(c.phone||'').replace(/\D/g,'');if(p.startsWith('0'))p='94'+p.slice(1);if(!p)return alert('Customer phone number missing');
@@ -1509,7 +1597,13 @@ function jobWhatsApp(id){
   const msg=`${data.settings.name}\n\nJob / Order: ${j.service||'-'}\nCustomer: ${c.name}\n\nDate: ${j.date||'-'}\nStatus: ${j.status||'-'}\n\nTotal Amount: ${money(total)}\nAdvance / Paid: ${money(paid)}\nTotal Due: ${money(balance)}${j.notes?`\n\nNotes:\n${j.notes}`:''}\n\nThank you for choosing ${data.settings.name}.`;
   openModal('WhatsApp Job / Order Message',`<div class="card"><textarea id="jobWaMessage" style="min-height:300px;white-space:pre-wrap">${esc(msg)}</textarea><button type="button" class="primary" style="margin-top:10px" onclick="sendWa('${p}','jobWaMessage')">Send WhatsApp</button></div>`)
 }
-function renderJobs(){jobTable.innerHTML=data.jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${data.jobs.map(j=>{const paid=jobPaymentTotal(j.id),bal=jobBalance(j);return `<tr><td class="pm-j-customer">${esc(customerName(j.customer_id))}</td><td class="pm-j-service">${esc(j.service)}</td><td class="pm-j-date">${j.date||''}</td><td class="pm-j-total">${money(j.total)}</td><td class="pm-j-paid paid-strong">${money(paid)}</td><td class="pm-j-balance ${bal>0?'due-strong':'paid-strong'}">${money(bal)}</td><td class="pm-j-status"><span class="badge">${esc(j.status)}</span></td><td class="pm-actions"><button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button> <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No jobs.</div>'}
+function renderJobs(){
+  const all=[...data.jobs].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const done=all.filter(j=>['Completed','Delivered'].includes(String(j.status||'').trim()));
+  const active=all.filter(j=>!['Completed','Delivered'].includes(String(j.status||'').trim()));
+  const table=(jobs)=>jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${jobs.map(j=>{const paid=jobPaymentTotal(j.id),bal=jobBalance(j);return `<tr><td class="pm-j-customer">${esc(customerName(j.customer_id))}</td><td class="pm-j-service">${esc(j.service)}</td><td class="pm-j-date">${j.date||''}</td><td class="pm-j-total">${money(j.total)}</td><td class="pm-j-paid paid-strong">${money(paid)}</td><td class="pm-j-balance ${bal>0?'due-strong':'paid-strong'}">${money(bal)}</td><td class="pm-j-status"><span class="badge">${esc(j.status)}</span></td><td class="pm-actions"><button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button> <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No jobs.</div>';
+  jobTable.innerHTML=all.length?`<section class="pm-job-group"><h3>🛠️ Active Jobs / Orders <span class="badge">${active.length}</span></h3>${table(active)}</section><section class="pm-job-group pm-completed-jobs"><h3>✅ Completed / Delivered <span class="badge">${done.length}</span></h3>${table(done)}</section>`:'<div class="empty">No jobs.</div>';
+}
 function renderInvoices(){invoiceTable.innerHTML=data.invoices.length?`<table><tr><th>No</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Balance/Change</th><th>Status</th><th>Payment History</th><th>Actions</th></tr>${data.invoices.map(i=>{const paid=paymentTotal(i),bal=invoiceBalance(i),over=bal<0,due=bal>0;return `<tr class="${over?'invoice-overpaid-row':due?'invoice-due-row':''}"><td class="pm-i-no">${i.invoice_no||i.id.slice(0,8)}</td><td class="pm-i-date">${invoiceDate(i)}</td><td class="pm-i-customer">${esc(customerName(i.customer_id))}</td><td class="pm-i-total">${money(i.total)}</td><td class="pm-i-paid ${paid>0?'paid-strong':''}">${money(paid)}</td><td class="pm-i-balance ${over?'overpaid-strong':due?'due-strong':'paid-strong'}">${money(Math.abs(bal))}</td><td class="pm-i-status"><span class="badge ${over?'overpaidbadge':due?'dangerbadge':'paid'}">${over?'OVERPAID':due?'BALANCE DUE':'PAID'}</span></td><td class="pm-i-history">${paymentHistoryHtml(i)}</td><td class="pm-actions"><button class="secondary" onclick="openInvoice(data.invoices.find(x=>x.id==='${i.id}'))">Edit / Payment</button> <button class="secondary" onclick="printInvoice('${i.id}')">PDF</button> <button class="secondary" onclick="waReminder('${i.id}')">WhatsApp</button>${isAdmin?` <button class="danger" onclick="deleteRecord('invoices','${i.id}','invoice')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No invoices.</div>'}
 function renderExpenses(){expenseTable.innerHTML=data.expenses.length?`<table><tr><th>Date</th><th>Category</th><th>Description</th><th>Supplier</th><th>Amount</th><th>Actions</th></tr>${data.expenses.map(x=>{const p=purchaseInfo(x);return `<tr><td>${x.date}</td><td>${esc(x.category)}</td><td>${esc(p?.label||x.description)}</td><td>${esc(p?.supplier||'-')}</td><td>${money(x.amount)}</td><td><button class="secondary" onclick="openExpense(data.expenses.find(v=>v.id==='${x.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteExpense('${x.id}')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No expenses.</div>'}
 function supplierTransactions(){return catalogState().supplier_transactions||[]}
@@ -1552,7 +1646,7 @@ function openSupplierHistory(supplierId){
   const body=rows.length?`<table><tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th><th>Notes</th></tr>${rows.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.kind)}</td><td>${esc(r.ref)}</td><td class="${r.amount<0?'paid-strong':'due-strong'}">${r.amount<0?'- ':''}${money(Math.abs(r.amount))}</td><td>${esc(r.detail||'')}</td></tr>`).join('')}</table>`:'<div class="empty">No account history yet.</div>';
   openModal(`Supplier Account — ${esc(s.name)}`,`<div class="card" style="margin-bottom:12px"><div class="muted">Current balance</div><div class="kpi">${money(bal)}</div><div class="hint">Positive = you owe supplier · Negative = supplier credit</div></div>${body}`)
 }
-function renderSuppliers(){const q=(document.getElementById('supplierSearch')?.value||'').toLowerCase();const rows=suppliers().filter(x=>(x.name+' '+x.phone+' '+x.notes).toLowerCase().includes(q));supplierTable.innerHTML=rows.length?`<table><tr><th>Supplier</th><th>Phone</th><th>Balance</th><th>Notes</th><th>Actions</th></tr>${rows.map(x=>{const bal=supplierOutstanding(x.id);return `<tr><td>${esc(x.name)}</td><td>${esc(x.phone||'')}</td><td class="${bal>0?'due-strong':bal<0?'overpaid-strong':'paid-strong'}">${supplierBalanceLabel(bal)}</td><td>${esc(x.notes||'')}</td><td><button class="danger" onclick="openSupplierTransaction('${x.id}','give')">Give Money</button> <button class="receive" onclick="openSupplierTransaction('${x.id}','receive')">Receive Money</button> <button class="secondary" onclick="openSupplierHistory('${x.id}')">History</button> <button class="secondary" onclick="supplierWhatsApp('${x.id}')">WhatsApp</button> <button class="secondary" onclick='openSupplier(${JSON.stringify(x).replace(/'/g,"&#39;")})'>Edit</button><button class="danger" onclick="deleteSupplier('${x.id}')">Delete</button></td></tr>`}).join('')}</table>`:'<div class="empty">No suppliers yet.</div>'}
+function renderSuppliers(){const q=(document.getElementById('supplierSearch')?.value||'').toLowerCase();const rows=suppliers().filter(x=>(x.name+' '+x.phone+' '+x.notes).toLowerCase().includes(q));supplierTable.innerHTML=rows.length?`<table><tr><th>Supplier</th><th>Phone</th><th>Balance</th><th>Notes</th><th>Actions</th></tr>${rows.map(x=>{const bal=supplierOutstanding(x.id);return `<tr><td>${esc(x.name)}</td><td>${esc(x.phone||'')}</td><td class="${bal>0?'due-strong':bal<0?'overpaid-strong':'paid-strong'}">${supplierBalanceLabel(bal)}</td><td>${esc(x.notes||'')}</td><td><button class="danger" onclick="openSupplierTransaction('${x.id}','give')">Pending</button> <button class="receive" onclick="openSupplierTransaction('${x.id}','receive')">Pay</button> <button class="secondary" onclick="openSupplierHistory('${x.id}')">History</button> <button class="secondary" onclick="supplierWhatsApp('${x.id}')">WhatsApp</button> <button class="secondary" onclick='openSupplier(${JSON.stringify(x).replace(/'/g,"&#39;")})'>Edit</button><button class="danger" onclick="deleteSupplier('${x.id}')">Delete</button></td></tr>`}).join('')}</table>`:'<div class="empty">No suppliers yet.</div>'}
 function supplierWhatsApp(id){
   const s=suppliers().find(x=>String(x.id)===String(id));if(!s)return;
   let p=String(s.phone||'').replace(/\D/g,'');if(p.startsWith('0'))p='94'+p.slice(1);if(!p)return alert('Supplier phone / WhatsApp number missing');
@@ -1895,3 +1989,17 @@ boot();
 
 <!-- Purple PM logo UI redesign applied; application logic preserved. -->
 </html>
+
+<style id="prabhash-job-mobile-fixes">
+.pm-job-group{margin:12px 0 22px}.pm-job-group h3{display:flex;align-items:center;gap:9px;margin:12px 0;padding:10px 12px;border:1px solid #30263a;border-radius:12px;background:#121018;font-size:15px}.pm-completed-jobs h3{border-color:rgba(49,196,141,.35);color:#7de2b5;background:rgba(20,65,48,.2)}
+@media(max-width:768px){
+  body{padding-bottom:110px!important}
+  .modal{align-items:flex-start!important;padding:8px 8px 92px!important;overflow-y:auto!important}
+  .modalbox{height:auto!important;min-height:0!important;max-height:calc(100dvh - 108px)!important;overflow-y:auto!important;display:block!important;padding:13px!important;margin:auto 0!important}
+  #modalBody{display:block!important;overflow:visible!important;min-height:0!important;padding-bottom:24px!important}
+  #modalBody form{padding-bottom:20px!important;gap:11px!important}
+  #modalBody form>.full:last-child{padding-bottom:8px!important;margin-bottom:4px!important}
+  #modalBody form button.primary{min-height:48px!important;width:100%!important;font-size:15px!important;position:relative!important;z-index:2!important}
+  .pm-job-group{margin-bottom:25px}.pm-job-group h3{font-size:13px;position:sticky;left:0}
+}
+</style>
