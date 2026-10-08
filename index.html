@@ -719,9 +719,9 @@ let data={customers:[],jobs:[],invoices:[],expenses:[],settings:null};
 function localCatalog(){try{return JSON.parse(localStorage.getItem('prabhash_item_catalog')||'[]')}catch(e){return []}}
 function catalogState(){
   let v=data.settings?.item_catalog;
-  if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[],job_photos:{}};
-  if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[],customer_transactions:Array.isArray(v.customer_transactions)?v.customer_transactions:[],supplier_transactions:Array.isArray(v.supplier_transactions)?v.supplier_transactions:[],profit_settings:v.profit_settings&&typeof v.profit_settings==='object'?v.profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:Array.isArray(v.profit_withdrawals)?v.profit_withdrawals:[],employees:Array.isArray(v.employees)?v.employees:[],employee_advances:Array.isArray(v.employee_advances)?v.employee_advances:[],salary_records:Array.isArray(v.salary_records)?v.salary_records:[],job_payments:Array.isArray(v.job_payments)?v.job_payments:[],job_photos:v.job_photos&&typeof v.job_photos==='object'?v.job_photos:{}};
-  let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[],job_photos:{}};
+  if(Array.isArray(v)) return {items:v,suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
+  if(v&&typeof v==='object') return {items:Array.isArray(v.items)?v.items:[],suppliers:Array.isArray(v.suppliers)?v.suppliers:[],purchases:Array.isArray(v.purchases)?v.purchases:[],customer_transactions:Array.isArray(v.customer_transactions)?v.customer_transactions:[],supplier_transactions:Array.isArray(v.supplier_transactions)?v.supplier_transactions:[],profit_settings:v.profit_settings&&typeof v.profit_settings==='object'?v.profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:Array.isArray(v.profit_withdrawals)?v.profit_withdrawals:[],employees:Array.isArray(v.employees)?v.employees:[],employee_advances:Array.isArray(v.employee_advances)?v.employee_advances:[],salary_records:Array.isArray(v.salary_records)?v.salary_records:[],job_payments:Array.isArray(v.job_payments)?v.job_payments:[]};
+  let old=localCatalog(); return {items:Array.isArray(old)?old:[],suppliers:[],purchases:[],customer_transactions:[],supplier_transactions:[],profit_settings:{owner1:'Owner 1',owner2:'Owner 2'},profit_withdrawals:[],employees:[],employee_advances:[],salary_records:[],job_payments:[]};
 }
 async function saveCatalog(st){
   const safe = st && typeof st === 'object' ? st : catalogState();
@@ -888,11 +888,64 @@ async function saveCustomerTransaction(e,customerId,type){
   if(!await saveCustomerTransactions(rows))return; closeModal();await loadAll();render();toast(type==='receive'?(row.applied>0?'Money received and invoice balance updated ✓':'Money received and saved as customer credit ✓'):'Customer give-money saved ✓');
 }
 function openCustomerHistory(customerId){
-  const c=customer(customerId), rows=customerAccountHistory(customerId), bal=customerOutstanding(customerId);
-  const body=rows.length?`<table><tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th><th>Notes</th></tr>${rows.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.kind)}</td><td>${esc(r.ref)}</td><td class="${r.amount<0?'paid-strong':'due-strong'}">${r.amount<0?'- ':''}${money(Math.abs(r.amount))}</td><td>${esc(r.detail||'')}</td></tr>`).join('')}</table>`:'<div class="empty">No account history yet.</div>';
-  openModal(`Customer Account — ${esc(c.name)}`,`<div class="card" style="margin-bottom:12px"><div class="muted">Current balance</div><div class="kpi">${money(bal)}</div><div class="hint">Positive = customer owes you · Negative = customer credit</div></div>${body}`)
+  const c=customer(customerId); if(!c?.id)return;
+  const ids=customerGroupIds(customerId), rows=[];
+  data.invoices.filter(x=>ids.includes(String(x.customer_id))).forEach(inv=>{
+    invoicePayments(inv).forEach((pay,idx)=>{
+      rows.push({date:pay.date||invoiceDate(inv),kind:'Invoice Payment',ref:inv.invoice_no||inv.id.slice(0,8),amount:-Math.max(0,Number(pay.amount)||0),detail:pay.method||'Payment',action:`<button type="button" class="secondary" onclick="editCustomerInvoicePayment('${inv.id}',${idx})">Edit</button> <button type="button" class="danger" onclick="deleteCustomerInvoicePayment('${inv.id}',${idx})">Delete</button>`});
+    });
+  });
+  data.jobs.filter(j=>ids.includes(String(j.customer_id))).forEach(job=>{
+    jobPayments().filter(p=>String(p.job_id)===String(job.id)).forEach((pay,idx)=>{
+      rows.push({date:pay.date||job.date||todayISO(),kind:'Job Payment',ref:job.service||job.id.slice(0,8),amount:-Math.max(0,Number(pay.amount)||0),detail:pay.method||'Payment',action:`<button type="button" class="secondary" onclick="editCustomerJobPayment('${job.id}',${idx})">Edit</button> <button type="button" class="danger" onclick="deleteCustomerJobPayment('${job.id}',${idx})">Delete</button>`});
+    });
+  });
+  customerTransactions().filter(x=>String(x.customer_id)===String(customerId)).forEach(tx=>{
+    rows.push({date:tx.date||todayISO(),kind:tx.type==='give'?'Pending':'Receive Money',ref:'Account',amount:tx.type==='give'?Math.max(0,Number(tx.amount)||0):-Math.max(0,Number(tx.amount)||0),detail:tx.notes||'',action:`<button type="button" class="secondary" onclick="editCustomerTransaction('${tx.id}')">Edit</button> <button type="button" class="danger" onclick="deleteCustomerTransaction('${tx.id}')">Delete</button>`});
+  });
+  rows.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const body=rows.length?`<div style="overflow:auto"><table><tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th><th>Notes</th><th>Actions</th></tr>${rows.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.kind)}</td><td>${esc(r.ref)}</td><td class="${r.amount<0?'paid-strong':'due-strong'}">${r.amount<0?'- ':''}${money(Math.abs(r.amount))}</td><td>${esc(r.detail||'')}</td><td style="white-space:nowrap">${r.action}</td></tr>`).join('')}</table></div>`:'<div class="empty">No editable payment history yet.</div>';
+  openModal(`Customer Account — ${esc(c.name)}`,`<div class="card" style="margin-bottom:12px"><div class="muted">Current balance</div><div class="kpi">${money(customerOutstanding(customerId))}</div><div class="hint">Edit or delete individual payment entries here without deleting the whole customer.</div></div>${body}`);
 }
-
+function findInvoiceById(id){return data.invoices.find(x=>String(x.id)===String(id))}
+function findJobById(id){return data.jobs.find(x=>String(x.id)===String(id))}
+async function updateInvoicePayments(inv,payments){
+  const paid=payments.reduce((s,x)=>s+Math.max(0,Number(x.amount)||0),0),total=Math.max(0,Number(inv.total)||0),credit=invoiceCreditApplied(inv),balance=total-paid-credit;
+  const clean=cleanInvoiceNotes(inv.notes||'');
+  const notes=`[[invoice_date:${invoiceDate(inv)}]][[PAYMENTS:${JSON.stringify(payments)}]][[CREDIT_APPLIED:${credit.toFixed(2)}]]${clean?' '+clean:''}`;
+  const q=await sb.from('invoices').update({paid,balance,status:balance<0?'Overpaid':balance===0?'Paid':paid>0?'Partial':'Unpaid',notes}).eq('id',inv.id);
+  if(q.error){alert(q.error.message);return false} return true;
+}
+function editCustomerInvoicePayment(invoiceId,index){
+  const inv=findInvoiceById(invoiceId), rows=invoicePayments(inv), pay=rows[Number(index)]; if(!inv||!pay)return;
+  openModal('Edit Invoice Payment',`<form onsubmit="saveEditedInvoicePayment(event,'${invoiceId}',${Number(index)})"><div><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" value="${Number(pay.amount)||0}" required></div><div><label>Date</label><input name="date" type="date" value="${esc(pay.date||invoiceDate(inv))}" required></div><div><label>Payment Method</label><input name="method" value="${esc(pay.method||'Cash')}"></div><div class="full"><button class="primary">Save Changes</button></div></form>`);
+}
+async function saveEditedInvoicePayment(e,invoiceId,index){
+  e.preventDefault(); const inv=findInvoiceById(invoiceId); if(!inv)return; const f=new FormData(e.target),rows=invoicePayments(inv),amount=Math.max(0,Number(f.get('amount'))||0); if(!amount)return alert('Enter a valid amount.');
+  rows[Number(index)]={...rows[Number(index)],amount,date:f.get('date')||todayISO(),method:String(f.get('method')||'Cash')}; if(!await updateInvoicePayments(inv,rows))return; closeModal();await loadAll();render();toast('Invoice payment updated ✓');
+}
+async function deleteCustomerInvoicePayment(invoiceId,index){
+  const inv=findInvoiceById(invoiceId); if(!inv)return; const rows=invoicePayments(inv),pay=rows[Number(index)]; if(!pay||!confirm(`Delete this payment of ${money(pay.amount)}?`))return; rows.splice(Number(index),1); if(!await updateInvoicePayments(inv,rows))return; closeModal();await loadAll();render();toast('Invoice payment deleted ✓');
+}
+function editCustomerJobPayment(jobId,index){
+  const job=findJobById(jobId),matching=jobPayments().filter(p=>String(p.job_id)===String(jobId)),pay=matching[Number(index)]; if(!job||!pay)return;
+  openModal('Edit Job Payment',`<form onsubmit="saveEditedJobPayment(event,'${jobId}','${String(pay.id)}')"><div><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" value="${Number(pay.amount)||0}" required></div><div><label>Date</label><input name="date" type="date" value="${esc(pay.date||job.date||todayISO())}" required></div><div><label>Payment Method</label><input name="method" value="${esc(pay.method||'Cash')}"></div><div class="full"><label>Note</label><textarea name="notes">${esc(pay.notes||'')}</textarea></div><div class="full"><button class="primary">Save Changes</button></div></form>`);
+}
+async function saveEditedJobPayment(e,jobId,paymentId){
+  e.preventDefault(); const rows=jobPayments(),idx=rows.findIndex(p=>String(p.id)===String(paymentId)),job=findJobById(jobId); if(idx<0||!job)return; const f=new FormData(e.target),amount=Math.max(0,Number(f.get('amount'))||0),other=rows.filter(p=>String(p.job_id)===String(jobId)&&String(p.id)!==String(paymentId)).reduce((s,p)=>s+Math.max(0,Number(p.amount)||0),0); if(!amount)return alert('Enter a valid amount.'); if(other+amount>Math.max(0,Number(job.total)||0))return alert('Payment total cannot exceed the job total.'); rows[idx]={...rows[idx],amount,date:f.get('date')||todayISO(),method:String(f.get('method')||'Cash'),notes:String(f.get('notes')||'').trim()}; if(!await saveJobPayments(rows))return; closeModal();await loadAll();render();toast('Job payment updated ✓');
+}
+async function deleteCustomerJobPayment(jobId,index){
+  const matching=jobPayments().filter(p=>String(p.job_id)===String(jobId)),pay=matching[Number(index)]; if(!pay||!confirm(`Delete this job payment of ${money(pay.amount)}?`))return; const rows=jobPayments().filter(x=>String(x.id)!==String(pay.id)); if(!await saveJobPayments(rows))return; closeModal();await loadAll();render();toast('Job payment deleted ✓');
+}
+function editCustomerTransaction(id){
+  const row=customerTransactions().find(x=>String(x.id)===String(id)); if(!row)return; openModal(row.type==='give'?'Edit Pending Entry':'Edit Receive Money',`<form onsubmit="saveEditedCustomerTransaction(event,'${id}')"><div><label>Amount</label><input name="amount" type="number" min="0.01" step="0.01" value="${Number(row.amount)||0}" required></div><div><label>Date</label><input name="date" type="date" value="${esc(row.date||todayISO())}" required></div><div class="full"><label>Notes</label><textarea name="notes">${esc(row.notes||'')}</textarea></div><div class="full"><button class="primary">Save Changes</button></div></form>`);
+}
+async function saveEditedCustomerTransaction(e,id){
+  e.preventDefault(); const rows=customerTransactions(),idx=rows.findIndex(x=>String(x.id)===String(id)); if(idx<0)return; const old=rows[idx],f=new FormData(e.target),amount=Math.max(0,Number(f.get('amount'))||0); if(!amount)return alert('Enter a valid amount.'); if(old.type==='receive'&&Number(old.applied||0)>0)return alert('This Receive Money was already applied to an invoice/job. Edit the matching Invoice Payment or Job Payment entry in History instead.'); rows[idx]={...old,amount,date:f.get('date')||todayISO(),notes:String(f.get('notes')||'').trim()}; if(!await saveCustomerTransactions(rows))return; closeModal();await loadAll();render();toast('History entry updated ✓');
+}
+async function deleteCustomerTransaction(id){
+  const rows=customerTransactions(),idx=rows.findIndex(x=>String(x.id)===String(id)); if(idx<0)return; const row=rows[idx]; if(row.type==='receive'&&Number(row.applied||0)>0)return alert('This Receive Money was already applied. Delete the matching Invoice Payment or Job Payment in History instead.'); if(!confirm(`Delete this account entry of ${money(row.amount)}?`))return; rows.splice(idx,1); if(!await saveCustomerTransactions(rows))return; closeModal();await loadAll();render();toast('History entry deleted ✓');
+}
 function catalog(){return catalogState().items}
 function checkInvoiceStock(items, st, oldItems=[]){
   const requested={};
@@ -1057,7 +1110,7 @@ function contactImportControls(type){return `<div class="full" style="margin-top
 function openCustomer(c=null){openModal(c?'Edit Customer':'New Customer',`<form id="customerForm" onsubmit="saveCustomer(event,'${c?.id||''}')"><div><label>Name</label><input name="name" required value="${esc(c?.name)}"></div>${isAdmin?`<div><label>Phone / WhatsApp</label><input name="phone" value="${esc(c?.phone)}"></div>`:''}<div><label>Email</label><input name="email" value="${esc(c?.email)}"></div><div><label>Address</label><input name="address" value="${esc(c?.address)}"></div>${isAdmin?contactImportControls('customer'):''}<div class="full"><button class="primary">Save</button></div></form>`)}
 async function saveCustomer(e,id){e.preventDefault();let o=Object.fromEntries(new FormData(e.target));if(!id){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey(o));if(existing){closeModal();toast('This customer already exists — existing account kept ✓');return;}}let q=id?sb.from('customers').update(o).eq('id',id):sb.from('customers').insert(o);let {error}=await q;if(error)return alert([error.code,error.message,error.details,error.hint].filter(Boolean).join(' | '));closeModal();await loadAll();render();toast(id?'Customer updated ✓':'Customer saved ✓')}
 function toggleJobNewCustomer(){const box=document.getElementById('jobNewCustomerBox'),sel=document.querySelector('#jobForm select[name="customer_id"]');if(!box)return;const on=box.style.display==='none'||box.style.display==='';box.style.display=on?'block':'none';if(sel)sel.disabled=on;const hidden=document.getElementById('jobCustomerMode');if(hidden)hidden.value=on?'new':'existing';}
-function openJob(j=null){
+function openJob(j=null){ pendingJobPhotoFiles=[];
   const opts=data.customers.map(c=>`<option value="${c.id}" ${j?.customer_id===c.id?'selected':''}>${esc(c.name)}${isAdmin&&c.phone?' — '+esc(c.phone):''}</option>`).join('');
   const paid=j?jobPaymentTotal(j.id):0, bal=j?jobBalance(j):0;
   openModal(j?'Edit Job':'New Job',`<form id="jobForm" data-job-id="${j?.id||''}" onsubmit="saveJob(event,'${j?.id||''}')">
@@ -1069,86 +1122,21 @@ function openJob(j=null){
   <div><label>Total agreed</label><input type="number" step=".01" min="0" name="total" value="${j?.total||0}"></div>
   <div><label>Cost</label><input type="number" step=".01" min="0" name="cost" value="${j?.cost||0}"></div>
   <div><label>Status</label><select name="status"><option ${j?.status==='Booked'?'selected':''}>Booked</option><option ${j?.status==='In Progress'?'selected':''}>In Progress</option><option ${j?.status==='Completed'?'selected':''}>Completed</option><option ${j?.status==='Delivered'?'selected':''}>Delivered</option><option ${j?.status==='Cancelled'?'selected':''}>Cancelled</option></select></div>
-  <div class="full"><label>📷 Job Photos</label><input id="jobPhotoFiles" type="file" accept="image/*" multiple capture="environment" onchange="previewJobPhotos(event)" style="width:100%;padding:10px"><div class="hint">Add photos of the device, damage, parts or completed work. Photos are saved to Supabase Cloud for this job. Save the Job first if this is a new Job.</div><div id="jobPhotoPreview" class="job-photo-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div></div>
+  <div class="full"><label>📷 Job Photos</label><input id="jobPhotoFiles" type="file" accept="image/*" multiple capture="environment" onchange="previewJobPhotos(event)" style="width:100%;padding:10px"><div class="hint">Add photos of the device, damage, parts or completed work. Photos are saved in Supabase Cloud for this job.</div><div id="jobPhotoPreview" class="job-photo-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div></div>
   <div class="full"><label>Notes</label><textarea name="notes">${esc(j?.notes)}</textarea></div>
   ${j?`<div class="card full" style="margin-top:4px"><div class="grid"><div><div class="muted">Job Total</div><div class="kpi">${money(j.total)}</div></div><div><div class="muted">Paid / Advance</div><div class="kpi paid-strong">${money(paid)}</div></div><div><div class="muted">Remaining</div><div class="kpi due-strong">${money(bal)}</div></div></div><div style="margin-top:10px"><b>Payment History</b><div style="margin-top:5px">${jobPaymentHistoryHtml(j.id)}</div></div><button type="button" class="receive" style="margin-top:10px" onclick="openJobPayment('${j.id}')">💰 Collect Payment / Advance</button></div>`:''}
   <div class="full"><button class="primary">${j?'Save Changes':'Start Job'}</button></div></form>`);renderJobPhotos(j?.id||'')
 }
-const JOB_PHOTO_BUCKET='job-photos';
-function jobPhotoKey(id){return 'prabhash_job_photos_'+String(id)}
-function getLocalJobPhotos(id){try{return JSON.parse(localStorage.getItem(jobPhotoKey(id))||'[]')}catch(_){return []}}
-function jobPhotoMeta(id){const st=catalogState();return Array.isArray(st.job_photos?.[String(id)])?st.job_photos[String(id)]:[]}
-function saveJobPhotoMetaLocal(id,rows){try{localStorage.setItem('prabhash_job_photo_meta_'+String(id),JSON.stringify(rows))}catch(_){} }
-async function getJobPhotoUrls(id){
-  const rows=jobPhotoMeta(id); const out=[];
-  for(let i=0;i<rows.length;i++){
-    const r=rows[i];
-    if(r?.path){
-      const {data,error}=await sb.storage.from(JOB_PHOTO_BUCKET).createSignedUrl(r.path,3600);
-      if(!error&&data?.signedUrl) out.push({...r,url:data.signedUrl,index:i});
-    }
-  }
-  return out;
-}
-async function renderJobPhotos(id){
-  const box=document.getElementById('jobPhotoPreview');if(!box)return;
-  box.innerHTML='<div class="hint">Loading photos…</div>';
-  const cloud=await getJobPhotoUrls(id);
-  const local=getLocalJobPhotos(id);
-  const html=[];
-  cloud.forEach((p)=>html.push(`<div style="position:relative"><img src="${p.url}" alt="Job photo" style="width:82px;height:82px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"><button type="button" class="danger" style="padding:2px 7px;position:absolute;top:2px;right:2px" onclick="removeJobPhoto('${id}',${p.index})">×</button></div>`));
-  local.forEach((src,i)=>html.push(`<div style="position:relative"><img src="${src}" alt="Pending job photo" style="width:82px;height:82px;object-fit:cover;border-radius:8px;border:1px dashed var(--gold)"><button type="button" class="danger" style="padding:2px 7px;position:absolute;top:2px;right:2px" onclick="removeLocalJobPhoto('${id}',${i})">×</button></div>`));
-  box.innerHTML=html.join('')||'<div class="hint">No photos added yet.</div>';
-}
-async function uploadJobPhoto(id,file){
-  if(!id)return false;
-  if(!file.type.startsWith('image/'))return false;
-  if(file.size>5*1024*1024){alert('Please choose images smaller than 5 MB each.');return false;}
-  const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-  const path=`${currentUser?.id||'user'}/${id}/${crypto.randomUUID()}.${ext}`;
-  const {error}=await sb.storage.from(JOB_PHOTO_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
-  if(error){console.error(error);alert('Job photo cloud upload failed. Make sure the Supabase Storage bucket "job-photos" and its policies are set up.\n\n'+error.message);return false;}
-  const st=catalogState(); st.job_photos=st.job_photos||{}; st.job_photos[String(id)]=[...(st.job_photos[String(id)]||[]),{path,name:file.name,type:file.type,created_at:new Date().toISOString()}];
-  return await saveCatalog(st);
-}
-async function uploadLocalJobPhotos(id){
-  const pending=getLocalJobPhotos('');
-  if(!id||!pending.length)return;
-  for(let i=0;i<pending.length;i++){
-    try{
-      const res=await fetch(pending[i]); const blob=await res.blob();
-      const file=new File([blob],`job-photo-${Date.now()}-${i}.jpg`,{type:blob.type||'image/jpeg'});
-      await uploadJobPhoto(id,file);
-    }catch(err){console.error('Pending photo upload failed',err)}
-  }
-  localStorage.removeItem(jobPhotoKey(''));
-  await renderJobPhotos(id);
-}
-async function previewJobPhotos(e){
-  const files=[...(e.target.files||[])];if(!files.length)return;
-  const form=document.getElementById('jobForm'),id=form?.dataset.jobId||'';
-  for(const file of files){
-    if(!file.type.startsWith('image/'))continue;
-    if(file.size>5*1024*1024){alert('Please choose images smaller than 5 MB each.');continue;}
-    if(id) await uploadJobPhoto(id,file);
-    else{
-      const pending=getLocalJobPhotos('');
-      const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
-      pending.push(dataUrl);
-      try{localStorage.setItem(jobPhotoKey(''),JSON.stringify(pending))}catch(_){alert('Temporary photo storage is full. Please save the Job first, then add photos.');break;}
-    }
-  }
-  if(id)await renderJobPhotos(id); else await renderJobPhotos('');
-  e.target.value='';
-}
-async function removeJobPhoto(id,index){
-  const rows=jobPhotoMeta(id); const item=rows[index]; if(!item)return;
-  if(!confirm('Delete this job photo?'))return;
-  if(item.path){const {error}=await sb.storage.from(JOB_PHOTO_BUCKET).remove([item.path]);if(error){alert('Could not delete photo: '+error.message);return;}}
-  const st=catalogState();st.job_photos=st.job_photos||{};st.job_photos[String(id)]=rows.filter((_,i)=>i!==index);await saveCatalog(st);await renderJobPhotos(id);
-}
-function removeLocalJobPhoto(id,index){const photos=getLocalJobPhotos(id);photos.splice(index,1);try{localStorage.setItem(jobPhotoKey(id),JSON.stringify(photos))}catch(_){}renderJobPhotos(id)}
-
+/* ===== V16 Cloud Job Photos — Supabase Storage ===== */
+let pendingJobPhotoFiles=[];
+function jobPhotoBucket(){return "job-photos";}
+function jobPhotoPath(jobId,file){const ext=String(file?.name||"jpg").split(".").pop().toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";const uid=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2);return `${jobId}/${uid}.${ext}`}
+function jobPhotoUrl(path){try{return sb.storage.from(jobPhotoBucket()).getPublicUrl(path)?.data?.publicUrl||""}catch(_){return ""}}
+async function listJobPhotos(jobId){if(!jobId||!sb)return [];const r=await sb.storage.from(jobPhotoBucket()).list(String(jobId),{limit:100,sortBy:{column:"created_at",order:"asc"}});if(r.error){console.error(r.error);return []}return (r.data||[]).filter(x=>x?.name&&!x.name.endsWith("/")).map(x=>({name:x.name,path:`${jobId}/${x.name}`,url:jobPhotoUrl(`${jobId}/${x.name}`)}))}
+async function renderJobPhotos(id){const box=document.getElementById("jobPhotoPreview");if(!box)return;const cloud=await listJobPhotos(id);box.innerHTML=cloud.map(p=>`<div style="position:relative"><img src="${p.url}" style="width:82px;height:82px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"><button type="button" class="danger" style="padding:2px 7px;position:absolute;top:2px;right:2px" onclick="removeJobPhoto('${String(id).replace(/'/g,"\\'")}','${String(p.path).replace(/'/g,"\\'")}')">×</button></div>`).join("")}
+async function previewJobPhotos(e){const files=[...(e.target.files||[])];if(!files.length)return;for(const file of files){if(!file.type.startsWith("image/"))continue;if(file.size>2*1024*1024){alert(`"${file.name}" is larger than 2 MB.`);continue}pendingJobPhotoFiles.push(file)}e.target.value="";await renderJobPhotos(document.getElementById("jobForm")?.dataset.jobId||"")}
+async function uploadPendingJobPhotos(jobId){if(!jobId||!pendingJobPhotoFiles.length)return true;for(const file of [...pendingJobPhotoFiles]){const r=await sb.storage.from(jobPhotoBucket()).upload(jobPhotoPath(jobId,file),file,{cacheControl:"3600",upsert:false,contentType:file.type||"image/jpeg"});if(r.error){alert("Job photo upload failed: "+r.error.message);return false}}pendingJobPhotoFiles=[];return true}
+async function removeJobPhoto(id,path){if(!confirm("Delete this job photo?"))return;const r=await sb.storage.from(jobPhotoBucket()).remove([path]);if(r.error)return alert("Could not delete photo: "+r.error.message);await renderJobPhotos(id)}
 async function saveJob(e,id){
   e.preventDefault();const f=new FormData(e.target);let customerId=String(f.get('customer_id')||'');
   if(!id && f.get('customer_mode')==='new'){
@@ -1156,7 +1144,7 @@ async function saveJob(e,id){
     if(name){const existing=data.customers.find(c=>customerIdentityKey(c)===customerIdentityKey({name,phone}));if(existing)customerId=existing.id;else{const newCustomerId=crypto.randomUUID();const q=await sb.from('customers').insert({id:newCustomerId,name,phone,email:'',address:''});if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));customerId=newCustomerId;}}
   }
   let o={customer_id:customerId||null,service:f.get('service'),date:f.get('date')||todayISO(),total:Math.max(0,Number(f.get('total'))||0),cost:Math.max(0,Number(f.get('cost'))||0),status:f.get('status')||'Booked',notes:f.get('notes')||''};
-  let q=id?await sb.from('jobs').update(o).eq('id',id).select('id').single():await sb.from('jobs').insert(o).select('id').single();if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));const savedId=id||q.data?.id;if(savedId){const form=document.getElementById('jobForm');if(form)form.dataset.jobId=savedId;await uploadLocalJobPhotos(savedId)}closeModal();await loadAll();render();toast(id?'Job updated ✓':'Job started ✓')
+  let q=id?await sb.from('jobs').update(o).eq('id',id).select('id').single():await sb.from('jobs').insert(o).select('id').single();if(q.error)return alert([q.error.code,q.error.message,q.error.details,q.error.hint].filter(Boolean).join(' | '));const savedId=id||q.data?.id;if(savedId){const form=document.getElementById('jobForm');if(form)form.dataset.jobId=savedId;if(!await uploadPendingJobPhotos(savedId))return}closeModal();await loadAll();render();toast(id?'Job updated ✓':'Job started ✓')
 }
 function openJobPayment(jobId){const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const due=jobBalance(j);openModal(`Collect Payment — ${esc(j.service||'Job')}`,`<div class="card" style="margin-bottom:10px"><div class="grid"><div><div class="muted">Job Total</div><div class="kpi">${money(j.total)}</div></div><div><div class="muted">Already Paid</div><div class="kpi paid-strong">${money(jobPaymentTotal(j.id))}</div></div><div><div class="muted">Remaining</div><div class="kpi due-strong">${money(due)}</div></div></div></div><form onsubmit="saveJobPayment(event,'${j.id}')"><div><label>Payment / Advance Amount</label><input name="amount" type="number" min="0.01" max="${Math.max(due,0)}" step="0.01" required></div><div><label>Date</label><input name="date" type="date" value="${todayISO()}" required></div><div><label>Payment Method</label><select name="method"><option>Cash</option><option>Bank</option><option>Card</option><option>WhatsApp / Online</option><option>Other</option></select></div><div class="full"><label>Note</label><textarea name="notes" placeholder="Advance / balance payment"></textarea></div><div class="full"><button class="primary">Save Payment</button></div></form>`)}
 async function saveJobPayment(e,jobId){e.preventDefault();const j=data.jobs.find(x=>String(x.id)===String(jobId));if(!j)return;const f=new FormData(e.target),amount=Math.max(0,Number(f.get('amount'))||0),due=Math.max(0,jobBalance(j));if(!amount)return alert('Enter payment amount.');if(amount>due)return alert(`Payment cannot exceed remaining balance of ${money(due)}.`);const rows=[...jobPayments(),{id:crypto.randomUUID(),job_id:j.id,customer_id:j.customer_id||null,amount,date:f.get('date')||todayISO(),method:f.get('method')||'Cash',notes:String(f.get('notes')||'').trim(),created_at:new Date().toISOString(),by:currentUser?.email||''}];if(!await saveJobPayments(rows))return;closeModal();await loadAll();render();toast('Job payment saved ✓')}
@@ -1167,7 +1155,7 @@ function invoiceItemRow(it){
     <div class="item-field" style="flex:2;min-width:180px">
       <label>Item</label>
       <input class="item-name" value="${esc(it.name||'')}" placeholder="Type item name..." autocomplete="off" oninput="invoiceItemNameInput(this)" onfocus="invoiceItemNameInput(this)">
-      <div class="suggestions"></div>
+      <div class="suggestions" style="display:none;position:relative;z-index:50;margin-top:3px;border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
       <div class="stock-info hint" style="margin-top:4px">${stockText}</div>
     </div>
     <div style="width:95px"><label>Qty</label><input class="item-qty" type="number" min="1" step="1" value="${Math.max(1,Math.round(Number(it.qty)||1))}" oninput="updateInvoiceTotals()"></div>
@@ -1303,31 +1291,8 @@ async function saveNewInvoiceItemAndAdd(e){
   }
   const input=document.getElementById('quickInvoiceItem');if(input){input.value='';input.focus();}
 }
-function invoiceItemNameInput(input){
-  const q=String(input?.value||'').trim().toLowerCase();
-  const row=input?.closest('.invoice-item-row');
-  if(!row)return;
-  const box=row.querySelector('.suggestions');
-  if(box){
-    if(!q){box.innerHTML='';box.classList.remove('open');}
-    else{
-      const matches=catalog().filter(x=>String(x.name||'').toLowerCase().includes(q)).slice(0,12);
-      box.innerHTML=matches.map(x=>`<button type='button' onclick='pickInvoiceItem(this, ${JSON.stringify(String(x.name||''))}, ${Number(x.price)||0}, ${Number(x.cost)||0})'><span>${esc(x.name)}</span><span class='item-price-small'>${money(x.price)}</span></button>`).join('');
-      if(matches.length)box.classList.add('open');else box.classList.remove('open');
-    }
-  }
-  const exact=catalog().find(x=>String(x.name||'').trim().toLowerCase()===q);
-  if(exact){
-    row.querySelector('.item-price').value=Number(exact.price)||0;
-    row.dataset.cost=Number(exact.cost)||0;
-    const info=row.querySelector('.stock-info');if(info)info.textContent=`Stock: ${Number(exact.qty)||0}${exact.supplier?' • '+esc(exact.supplier):''}`;
-    updateInvoiceTotals();
-  }else if(!q){
-    const info=row.querySelector('.stock-info');if(info)info.textContent='Not a saved stock item';
-  }
-}
-
-function pickInvoiceItem(btn,name,price,cost){const row=btn.closest('.invoice-item-row');if(!row)return;row.querySelector('.item-name').value=name;row.querySelector('.item-price').value=Number(price)||0;row.dataset.cost=Number(cost)||0;const box=row.querySelector('.suggestions');if(box){box.innerHTML='';box.classList.remove('open')}const info=row.querySelector('.stock-info');const stock=catalog().find(x=>String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());if(info&&stock)info.textContent=`Stock: ${Number(stock.qty)||0}${stock.supplier?' • '+esc(stock.supplier):''}`;updateInvoiceTotals();}
+function invoiceItemNameInput(input){const row=input.closest(".invoice-item-row");if(!row)return;const box=row.querySelector(".suggestions"),q=String(input.value||"").trim().toLowerCase(),items=catalog(),matches=(q?items.filter(x=>String(x.name||"").toLowerCase().includes(q)):items).slice(0,10),exact=items.find(x=>String(x.name||"").trim().toLowerCase()===q);if(exact){row.querySelector(".item-price").value=Number(exact.price)||0;row.dataset.cost=Number(exact.cost)||0;updateInvoiceTotals()}if(!box)return;if(!matches.length){box.innerHTML=q?'<div class="hint" style="padding:8px">No saved item found.</div>':'';box.style.display=q?'block':'none';return}box.innerHTML=matches.map(x=>`<button type="button" style="display:block;width:100%;text-align:left;padding:8px 10px;border:0;border-bottom:1px solid var(--line);cursor:pointer" onmousedown="pickInvoiceItem(this,'${String(x.name||'').replace(/'/g,"\\'")}',${Number(x.price)||0},${Number(x.cost)||0});return false"><b>${esc(x.name||'')}</b><span class="hint" style="float:right">${money(Number(x.price)||0)}</span><div class="hint">Stock: ${Number(x.qty)||0}</div></button>`).join("");box.style.display="block"}
+function pickInvoiceItem(btn,name,price,cost){const row=btn.closest(".invoice-item-row");if(!row)return;row.querySelector(".item-name").value=name;row.querySelector(".item-price").value=Number(price)||0;row.dataset.cost=Number(cost)||0;const box=row.querySelector(".suggestions");if(box){box.innerHTML="";box.style.display="none"}updateInvoiceTotals()}
 async function saveItemFromInvoice(btn){
   const row=btn.closest('.invoice-item-row');
   const name=row?.querySelector('.item-name')?.value?.trim()||'';
@@ -1599,10 +1564,44 @@ function jobWhatsApp(id){
 }
 function renderJobs(){
   const all=[...data.jobs].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  const done=all.filter(j=>['Completed','Delivered'].includes(String(j.status||'').trim()));
-  const active=all.filter(j=>!['Completed','Delivered'].includes(String(j.status||'').trim()));
-  const table=(jobs)=>jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${jobs.map(j=>{const paid=jobPaymentTotal(j.id),bal=jobBalance(j);return `<tr><td class="pm-j-customer">${esc(customerName(j.customer_id))}</td><td class="pm-j-service">${esc(j.service)}</td><td class="pm-j-date">${j.date||''}</td><td class="pm-j-total">${money(j.total)}</td><td class="pm-j-paid paid-strong">${money(paid)}</td><td class="pm-j-balance ${bal>0?'due-strong':'paid-strong'}">${money(bal)}</td><td class="pm-j-status"><span class="badge">${esc(j.status)}</span></td><td class="pm-actions"><button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button> <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button> <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No jobs.</div>';
-  jobTable.innerHTML=all.length?`<section class="pm-job-group"><h3>🛠️ Active Jobs / Orders <span class="badge">${active.length}</span></h3>${table(active)}</section><section class="pm-job-group pm-completed-jobs"><h3>✅ Completed / Delivered <span class="badge">${done.length}</span></h3>${table(done)}</section>`:'<div class="empty">No jobs.</div>';
+  const isDone=j=>['Completed','Delivered'].includes(String(j.status||'').trim());
+  const due=all.filter(j=>Math.max(0,Number(jobBalance(j))||0)>0);
+  const active=all.filter(j=>!isDone(j) && Math.max(0,Number(jobBalance(j))||0)<=0);
+  const settled=all.filter(j=>isDone(j) && Math.max(0,Number(jobBalance(j))||0)<=0);
+
+  const table=(jobs)=>jobs.length?`<table><tr><th>Customer</th><th>Service</th><th>Date</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Status</th><th>Actions</th></tr>${jobs.map(j=>{
+    const paid=jobPaymentTotal(j.id),bal=jobBalance(j);
+    return `<tr>
+      <td class="pm-j-customer">${esc(customerName(j.customer_id))}</td>
+      <td class="pm-j-service">${esc(j.service)}</td>
+      <td class="pm-j-date">${j.date||''}</td>
+      <td class="pm-j-total">${money(j.total)}</td>
+      <td class="pm-j-paid paid-strong">${money(paid)}</td>
+      <td class="pm-j-balance ${bal>0?'due-strong':'paid-strong'}">${money(Math.max(0,bal))}</td>
+      <td class="pm-j-status"><span class="badge ${bal>0?'dangerbadge':isDone(j)?'paid':''}">${esc(j.status||'-')}</span></td>
+      <td class="pm-actions">
+        <button type="button" class="receive" onclick="openJobPayment('${j.id}')">💰 Payment</button>
+        <button type="button" class="secondary" onclick="openJob(data.jobs.find(x=>x.id==='${j.id}'))">Edit</button>
+        <button type="button" class="secondary" onclick="jobWhatsApp('${j.id}')">WhatsApp</button>
+        ${isAdmin?` <button type="button" class="danger" onclick="deleteRecord('jobs','${j.id}','job')">Delete</button>`:''}
+      </td>
+    </tr>`;
+  }).join('')}</table>`:'<div class="empty">No jobs in this section.</div>';
+
+  const section=(cls,title,icon,jobs,extra='')=>`<section class="pm-job-group ${cls}"><h3>${icon} ${title} <span class="badge">${jobs.length}</span>${extra}</h3>${table(jobs)}</section>`;
+
+  if(!all.length){
+    jobTable.innerHTML='<div class="empty">No jobs.</div>';
+    return;
+  }
+
+  jobTable.innerHTML=
+    section('pm-job-due','Payment Due / සල්ලි ගෙවන්න තියෙන Jobs','💰',due,'<span class="pm-job-hint">මේවාට balance එකක් තියෙනවා</span>')+
+    section('pm-job-process','In Process / වැඩ කරගෙන යන Jobs','🔧',active,'<span class="pm-job-hint">තව complete කරලා නැති Jobs</span>')+
+    `<details class="pm-job-archive">
+      <summary>✅ Completed & Fully Paid / සම්පූර්ණ කරලා සල්ලිත් ගෙවපු Jobs <span class="badge">${settled.length}</span></summary>
+      <div class="pm-job-archive-body">${table(settled)}</div>
+    </details>`;
 }
 function renderInvoices(){invoiceTable.innerHTML=data.invoices.length?`<table><tr><th>No</th><th>Date</th><th>Customer</th><th>Total</th><th>Paid</th><th>Balance/Change</th><th>Status</th><th>Payment History</th><th>Actions</th></tr>${data.invoices.map(i=>{const paid=paymentTotal(i),bal=invoiceBalance(i),over=bal<0,due=bal>0;return `<tr class="${over?'invoice-overpaid-row':due?'invoice-due-row':''}"><td class="pm-i-no">${i.invoice_no||i.id.slice(0,8)}</td><td class="pm-i-date">${invoiceDate(i)}</td><td class="pm-i-customer">${esc(customerName(i.customer_id))}</td><td class="pm-i-total">${money(i.total)}</td><td class="pm-i-paid ${paid>0?'paid-strong':''}">${money(paid)}</td><td class="pm-i-balance ${over?'overpaid-strong':due?'due-strong':'paid-strong'}">${money(Math.abs(bal))}</td><td class="pm-i-status"><span class="badge ${over?'overpaidbadge':due?'dangerbadge':'paid'}">${over?'OVERPAID':due?'BALANCE DUE':'PAID'}</span></td><td class="pm-i-history">${paymentHistoryHtml(i)}</td><td class="pm-actions"><button class="secondary" onclick="openInvoice(data.invoices.find(x=>x.id==='${i.id}'))">Edit / Payment</button> <button class="secondary" onclick="printInvoice('${i.id}')">PDF</button> <button class="secondary" onclick="waReminder('${i.id}')">WhatsApp</button>${isAdmin?` <button class="danger" onclick="deleteRecord('invoices','${i.id}','invoice')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No invoices.</div>'}
 function renderExpenses(){expenseTable.innerHTML=data.expenses.length?`<table><tr><th>Date</th><th>Category</th><th>Description</th><th>Supplier</th><th>Amount</th><th>Actions</th></tr>${data.expenses.map(x=>{const p=purchaseInfo(x);return `<tr><td>${x.date}</td><td>${esc(x.category)}</td><td>${esc(p?.label||x.description)}</td><td>${esc(p?.supplier||'-')}</td><td>${money(x.amount)}</td><td><button class="secondary" onclick="openExpense(data.expenses.find(v=>v.id==='${x.id}'))">Edit</button>${isAdmin?` <button class="danger" onclick="deleteExpense('${x.id}')">Delete</button>`:''}</td></tr>`}).join('')}</table>`:'<div class="empty">No expenses.</div>'}
@@ -1991,7 +1990,18 @@ boot();
 </html>
 
 <style id="prabhash-job-mobile-fixes">
-.pm-job-group{margin:12px 0 22px}.pm-job-group h3{display:flex;align-items:center;gap:9px;margin:12px 0;padding:10px 12px;border:1px solid #30263a;border-radius:12px;background:#121018;font-size:15px}.pm-completed-jobs h3{border-color:rgba(49,196,141,.35);color:#7de2b5;background:rgba(20,65,48,.2)}
+ .pm-job-group{margin:12px 0 22px}
+.pm-job-group h3{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;border:1px solid #30263a;border-radius:12px;background:#121018;font-size:15px}
+.pm-job-due h3{border-color:rgba(239,35,60,.35);color:#ff8d9b;background:rgba(90,20,30,.18)}
+.pm-job-process h3{border-color:rgba(91,140,255,.35);color:#9bb8ff;background:rgba(30,50,100,.18)}
+.pm-job-hint{font-size:11px;font-weight:500;opacity:.65;margin-left:auto}
+.pm-job-archive{margin:18px 0 25px;border:1px solid rgba(49,196,141,.25);border-radius:14px;background:rgba(20,65,48,.10);overflow:hidden}
+.pm-job-archive summary{cursor:pointer;list-style:none;padding:13px 14px;color:#7de2b5;font-weight:700;display:flex;align-items:center;gap:9px}
+.pm-job-archive summary::-webkit-details-marker{display:none}
+.pm-job-archive summary::before{content:'▶';font-size:10px;opacity:.7;transition:.2s}
+.pm-job-archive[open] summary::before{transform:rotate(90deg)}
+.pm-job-archive-body{padding:0 10px 10px}
+
 @media(max-width:768px){
   body{padding-bottom:110px!important}
   .modal{align-items:flex-start!important;padding:8px 8px 92px!important;overflow-y:auto!important}
